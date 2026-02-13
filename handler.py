@@ -1,6 +1,7 @@
 import fal
 from fal.container import ContainerImage
-from fal.toolkit.image import Image
+from fal.toolkit import Image
+from fastapi import Response, HTTPException
 from pathlib import Path
 import json
 import uuid
@@ -13,6 +14,7 @@ import copy
 import random
 from io import BytesIO
 from typing import Literal
+from PIL import Image as PILImage
 from comfy_models import MODEL_LIST
 from workflow import WORKFLOW_JSON
 from pydantic import BaseModel, Field
@@ -139,16 +141,27 @@ class SkinFixInput(BaseModel):
     )
 
 # -------------------------------------------------
+# Output Model
+# -------------------------------------------------
+class SkinFixOutput(BaseModel):
+    images: list[Image] = Field(
+        description="Output images from skin fix processing"
+    )
+
+# -------------------------------------------------
 # App
 # -------------------------------------------------
-class SkinFixApp(fal.App):
-    image = custom_image
-    machine_type = "GPU-H100"
-    max_concurrency = 5
-    requirements = ["websockets", "websocket-client"]
-
-    # 🔒 CRITICAL
-    private_logs = True
+class SkinFixApp(
+    fal.App,
+    keep_alive=100,
+    min_concurrency=0,
+    max_concurrency=5,
+    name="skin-fix",
+    machine_type="GPU-H100",
+    image=custom_image,
+    requirements=["websockets", "websocket-client"],
+    private_logs=True
+):
 
     def setup(self):
         # Download models
@@ -178,7 +191,7 @@ class SkinFixApp(fal.App):
             raise RuntimeError("ComfyUI failed to start")
 
     @fal.endpoint("/")
-    def handler(self, input: SkinFixInput):
+    async def handler(self, input: SkinFixInput, response: Response) -> SkinFixOutput:
         try:
             job = copy.deepcopy(WORKFLOW_JSON)
             workflow = job["input"]["workflow"]
@@ -229,7 +242,10 @@ class SkinFixApp(fal.App):
             prompt_id = resp.json()["prompt_id"]
 
             while True:
-                msg = json.loads(ws.recv())
+                out = ws.recv()
+                if not out.strip().startswith('{'):
+                    continue  # Skip non-JSON messages (progress messages)
+                msg = json.loads(out)
                 if msg.get("type") == "executing" and msg["data"]["node"] is None:
                     break
 
@@ -246,11 +262,17 @@ class SkinFixApp(fal.App):
                         f"&type={img['type']}"
                     )
                     r = requests.get(f"http://{COMFY_HOST}/view?{params}")
-                    images.append(Image.from_bytes(r.content, format="png"))
+                    pil_image = PILImage.open(BytesIO(r.content))
+                    output_image = Image.from_pil(pil_image, format="png")
+                    images.append(output_image)
 
             ws.close()
-            return {"status": "success", "images": images}
+            
+            # Set billing headers
+            response.headers["x-fal-billable-units"] = str(len(images))
+            
+            return SkinFixOutput(images=images)
 
         except Exception as e:
             traceback.print_exc()
-            return {"error": str(e)}
+            raise HTTPException(status_code=500, detail=str(e))
