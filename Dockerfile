@@ -44,8 +44,11 @@ WORKDIR /comfyui
 # ---------------------------------------------------------
 # Extra dependencies
 # ---------------------------------------------------------
+# Install opencv-contrib-python FIRST to avoid conflicts
+RUN pip install opencv-contrib-python==4.10.0.84
+
 RUN pip install requests websocket-client sageattention \
-    accelerate transformers opencv-python insightface onnxruntime-gpu==1.18.0
+    accelerate transformers insightface onnxruntime-gpu==1.18.0
 
 # FIX: Add missing websocket packages for fal run
 RUN pip install websocket-client websockets
@@ -62,12 +65,16 @@ RUN git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git /comfy
 RUN git clone https://github.com/cubiq/ComfyUI_essentials.git /comfyui/custom_nodes/ComfyUI_essentials \
     && pip install -r /comfyui/custom_nodes/ComfyUI_essentials/requirements.txt
 
-# 3. comfyui_face_parsing (HAS requirements)
+# 3. comfyui_face_parsing (HAS requirements - CRITICAL FOR SKIN FIX)
 RUN git clone https://github.com/Ryuukeisyou/comfyui_face_parsing.git /comfyui/custom_nodes/comfyui_face_parsing \
     && cd /comfyui/custom_nodes/comfyui_face_parsing \
-    && if [ -f requirements.txt ]; then pip install -r requirements.txt || echo "Warning: Failed to install comfyui_face_parsing requirements"; fi \
-    && ls -la /comfyui/custom_nodes/comfyui_face_parsing \
-    && echo "✓ comfyui_face_parsing installed"
+    && echo "📦 Installing comfyui_face_parsing requirements..." \
+    && if [ -f requirements.txt ]; then \
+        cat requirements.txt && \
+        pip install -r requirements.txt --no-cache-dir || { echo "❌ Failed to install comfyui_face_parsing requirements"; exit 1; }; \
+    fi \
+    && echo "✅ comfyui_face_parsing installed successfully" \
+    && ls -la /comfyui/custom_nodes/comfyui_face_parsing
 
 # 4. ComfyUI LayerStyle Advance (HAS requirements)
 RUN git clone https://github.com/chflame163/ComfyUI_LayerStyle_Advance.git /comfyui/custom_nodes/ComfyUI_LayerStyle_Advance \
