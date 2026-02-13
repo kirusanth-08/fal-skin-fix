@@ -1,7 +1,7 @@
 import fal
 from fal.container import ContainerImage
 from fal.toolkit import Image
-from fastapi import Request, Response
+from fastapi import Response, HTTPException
 from pathlib import Path
 import json
 import uuid
@@ -81,7 +81,6 @@ def download_if_missing(url, path):
                 f.write(chunk)
 
 def check_server(url, retries=500, delay=0.1):
-    import time
     for _ in range(retries):
         try:
             if requests.get(url).status_code == 200:
@@ -296,7 +295,6 @@ class SkinFixApp(
             if resp.status_code != 200:
                 error_detail = resp.text
                 print(f"ComfyUI Error Response: {error_detail}")
-                from fastapi import HTTPException
                 raise HTTPException(status_code=500, detail=f"ComfyUI rejected workflow: {error_detail}")
             
             prompt_id = resp.json()["prompt_id"]
@@ -333,8 +331,8 @@ class SkinFixApp(
             
             return SkinFixOutput(images=images)
 
+        except HTTPException:
+            raise
         except Exception as e:
             traceback.print_exc()
-            # Re-raise as HTTPException for proper error handling
-            from fastapi import HTTPException
             raise HTTPException(status_code=500, detail=str(e))
