@@ -103,7 +103,7 @@ def upload_images(images):
         r.raise_for_status()
 
 # -------------------------------------------------
-# Input Model (UI)
+# Input Model (conditional UI already applied)
 # -------------------------------------------------
 class SkinFixInput(BaseModel):
     skin_preset: Literal[
@@ -114,7 +114,7 @@ class SkinFixInput(BaseModel):
         "portrait",
         "mid_range",
         "full_body"
-    ] = Field(title="Skin Preset")
+    ] = Field(default="none", title="Skin Preset")
 
     image: Image = Field(title="Input Image")
 
@@ -123,29 +123,26 @@ class SkinFixInput(BaseModel):
         ge=0.0,
         le=2.0,
         title="Skin Realism",
-        description="Ignored when preset selected"
+        json_schema_extra={"visible_when": {"skin_preset": "none"}}
     )
 
-    # INTEGER SLIDER → mapped internally to 0.30–0.40
     skin_refinement: int = Field(
-        default=0,
+        default=30,
         ge=0,
         le=100,
         title="Skin Refinement",
-        description="Ignored when preset selected"
+        json_schema_extra={"visible_when": {"skin_preset": "none"}}
     )
 
-    seed: int = Field(
-        default=123456789,
-        title="Random Seed"
-    )
+    seed: int = Field(default=123456789, title="Random Seed")
 
     upscale_resolution: Literal[
         1024, 1280, 1536, 1792,
         2048, 2304, 2560, 2816, 3072
     ] = Field(
         default=2048,
-        title="Upscaler Resolution"
+        title="Upscaler Resolution",
+        json_schema_extra={"visible_when": {"skin_preset": "none"}}
     )
 
 # -------------------------------------------------
@@ -208,6 +205,13 @@ class SkinFixApp(
             job = copy.deepcopy(WORKFLOW_JSON)
             workflow = job["input"]["workflow"]
 
+            # -------------------------------------------------
+            # 1️⃣ Read input image resolution (KEY PART)
+            # -------------------------------------------------
+            pil_img = input.image.to_pil()
+            w, h = pil_img.size
+            input_image_resolution = max(w, h)
+
             # Upload image
             image_name = f"input_{uuid.uuid4().hex}.png"
             upload_images([{
@@ -218,12 +222,14 @@ class SkinFixApp(
 
             sampler = workflow["29"]["inputs"]
 
-            # Preset logic
+            # -------------------------------------------------
+            # 2️⃣ Determine target resolution (NO DOWNSCALE)
+            # -------------------------------------------------
             if input.skin_preset != "none":
                 p = PRESETS[input.skin_preset]
+                target_resolution = max(p["resolution"], input_image_resolution)
                 sampler["cfg"] = p["cfg"]
                 sampler["denoise"] = p["denoise"]
-                workflow["30"]["inputs"]["new_resolution"] = p["resolution"]
 
                 if p.get("prompt_override"):
                     workflow["26"]["inputs"]["part1"] = p["positive_prompt"]
@@ -231,16 +237,23 @@ class SkinFixApp(
             else:
                 sampler["cfg"] = input.cfg
                 sampler["denoise"] = 0.30 + (input.skin_refinement / 100.0) * 0.10
+                target_resolution = max(input.upscale_resolution, input_image_resolution)
 
+            # Apply seed
             sampler["seed"] = input.seed
 
-            # Auto-random SeedVR2 seed
+            # -------------------------------------------------
+            # 3️⃣ Apply resolution to BOTH nodes
+            # -------------------------------------------------
+            workflow["30"]["inputs"]["new_resolution"] = target_resolution
+            workflow["31"]["inputs"]["vae_tile_size"] = target_resolution
+
+            # Always randomize SeedVR2 internal seed
             workflow["30"]["inputs"]["seed"] = random.randint(0, 2**32 - 1)
 
-            # Upscaler resolution
-            workflow["31"]["inputs"]["vae_tile_size"] = input.upscale_resolution
-
-            # Run ComfyUI
+            # -------------------------------------------------
+            # 4️⃣ Run ComfyUI
+            # -------------------------------------------------
             client_id = str(uuid.uuid4())
             ws = websocket.WebSocket()
             ws.connect(f"ws://{COMFY_HOST}/ws?clientId={client_id}")
