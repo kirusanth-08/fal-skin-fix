@@ -106,6 +106,8 @@ def upload_images(images):
 # Input Model (conditional UI already applied)
 # -------------------------------------------------
 class SkinFixInput(BaseModel):
+    image: Image = Field(title="Input Image")
+
     skin_preset: Literal[
         "none",
         "imperfect_skin",
@@ -115,8 +117,6 @@ class SkinFixInput(BaseModel):
         "mid_range",
         "full_body"
     ] = Field(default="none", title="Skin Preset")
-
-    image: Image = Field(title="Input Image")
 
     cfg: float = Field(
         default=1.0,
