@@ -98,8 +98,8 @@ RUN git clone https://github.com/rgthree/rgthree-comfy.git /comfyui/custom_nodes
 RUN git clone https://github.com/shangeethAlex/alex-node-final.git /comfyui/custom_nodes/ComfyUI-SeedVR2 \
     && pip install -r /comfyui/custom_nodes/ComfyUI-SeedVR2/requirements.txt
 
-RUN git clone https://github.com/kirusanth-08/comfyui_face_parsing.git /comfyui/custom_nodes/comfyui_face_parsing \
-    && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+RUN git clone https://github.com/Ryuukeisyou/comfyui_face_parsing.git /comfyui/custom_nodes/comfyui_face_parsing \
+    && if [ -f /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt ]; then pip install -r /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt; fi
 
 # ---------------------------------------------------------
 # fal Runtime Requirements
