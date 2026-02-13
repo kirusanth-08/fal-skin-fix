@@ -44,14 +44,22 @@ WORKDIR /comfyui
 # ---------------------------------------------------------
 # Extra dependencies
 # ---------------------------------------------------------
-# Install opencv-contrib-python FIRST to avoid conflicts
-RUN pip install opencv-contrib-python==4.10.0.84
+# Pre-install comfyui_face_parsing dependencies to avoid conflicts
+RUN pip install --no-cache-dir \
+    opencv-contrib-python-headless==4.10.0.84 \
+    torchvision \
+    ultralytics \
+    matplotlib
 
-RUN pip install requests websocket-client sageattention \
-    accelerate transformers insightface onnxruntime-gpu==1.18.0
-
-# FIX: Add missing websocket packages for fal run
-RUN pip install websocket-client websockets
+RUN pip install --no-cache-dir \
+    requests \
+    websocket-client \
+    websockets \
+    sageattention \
+    accelerate \
+    transformers \
+    insightface \
+    onnxruntime-gpu==1.18.0
 
 # ---------------------------------------------------------
 # Skin v03 / ComfyUI Custom Nodes
@@ -65,16 +73,9 @@ RUN git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git /comfy
 RUN git clone https://github.com/cubiq/ComfyUI_essentials.git /comfyui/custom_nodes/ComfyUI_essentials \
     && pip install -r /comfyui/custom_nodes/ComfyUI_essentials/requirements.txt
 
-# 3. comfyui_face_parsing (HAS requirements - CRITICAL FOR SKIN FIX)
+# 3. comfyui_face_parsing (requirements pre-installed above)
 RUN git clone https://github.com/Ryuukeisyou/comfyui_face_parsing.git /comfyui/custom_nodes/comfyui_face_parsing \
-    && cd /comfyui/custom_nodes/comfyui_face_parsing \
-    && echo "📦 Installing comfyui_face_parsing requirements..." \
-    && if [ -f requirements.txt ]; then \
-        cat requirements.txt && \
-        pip install -r requirements.txt --no-cache-dir || { echo "❌ Failed to install comfyui_face_parsing requirements"; exit 1; }; \
-    fi \
-    && echo "✅ comfyui_face_parsing installed successfully" \
-    && ls -la /comfyui/custom_nodes/comfyui_face_parsing
+    && echo "✅ comfyui_face_parsing cloned successfully"
 
 # 4. ComfyUI LayerStyle Advance (HAS requirements)
 RUN git clone https://github.com/chflame163/ComfyUI_LayerStyle_Advance.git /comfyui/custom_nodes/ComfyUI_LayerStyle_Advance \
