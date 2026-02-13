@@ -13,6 +13,8 @@ import os
 import copy
 import random
 import tempfile
+import time
+import subprocess
 from io import BytesIO
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field
@@ -95,6 +97,15 @@ def fal_image_to_base64(img: Image) -> str:
     pil.save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode()
 
+def image_url_to_base64(image_url: str) -> str:
+    """Download image from URL and convert to base64."""
+    response = requests.get(image_url)
+    response.raise_for_status()
+    pil = PILImage.open(BytesIO(response.content))
+    buf = BytesIO()
+    pil.save(buf, format="PNG")
+    return base64.b64encode(buf.getvalue()).decode()
+
 def upload_images(images):
     for img in images:
         blob = base64.b64decode(img["image"])
@@ -106,10 +117,14 @@ def upload_images(images):
 # Input Model (conditional UI already applied)
 # -------------------------------------------------
 class SkinFixInput(BaseModel):
-    image: Image = Field(
+    image_url: str = Field(
         ...,
         title="Input Image",
-        description="Upload an image to enhance and upscale"
+        description="URL of the image to enhance and upscale.",
+        examples=[
+            "https://images.unsplash.com/photo-1707661553213-df6e18dd54ad?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDExfHx8ZW58MHx8fHx8",
+            "https://images.pexels.com/photos/5077664/pexels-photo-5077664.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"
+        ]
     )
 
     skin_preset: Literal[
@@ -177,6 +192,16 @@ class SkinFixApp(
     private_logs = True
 
     def setup(self):
+        # Print GPU info
+        try:
+            gpu_info = subprocess.check_output(
+                ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
+                text=True
+            ).strip()
+            print(f"🖥️ GPU Type: {gpu_info}")
+        except Exception as e:
+            print(f"⚠️ Could not detect GPU: {e}")
+
         # Download models
         for model in MODEL_LIST:
             download_if_missing(model["url"], model["path"])
@@ -188,7 +213,6 @@ class SkinFixApp(
                 os.symlink(model["path"], model["target"])
 
         # Start ComfyUI (NO --log-stdout)
-        import subprocess
         self.comfy = subprocess.Popen(
             [
                 "python", "-u", "/comfyui/main.py",
@@ -210,9 +234,13 @@ class SkinFixApp(
             workflow = job["input"]["workflow"]
 
             # -------------------------------------------------
-            # 1️⃣ Read input image resolution (KEY PART)
+            # 1️⃣ Download and read input image resolution (KEY PART)
             # -------------------------------------------------
-            pil_img = input.image.to_pil()
+            # Download image from URL
+            image_b64 = image_url_to_base64(input.image_url)
+            
+            # Get resolution from downloaded image
+            pil_img = PILImage.open(BytesIO(base64.b64decode(image_b64)))
             w, h = pil_img.size
             input_image_resolution = max(w, h)
 
@@ -220,7 +248,7 @@ class SkinFixApp(
             image_name = f"input_{uuid.uuid4().hex}.png"
             upload_images([{
                 "name": image_name,
-                "image": fal_image_to_base64(input.image)
+                "image": image_b64
             }])
             workflow["32"]["inputs"]["image"] = image_name
 
