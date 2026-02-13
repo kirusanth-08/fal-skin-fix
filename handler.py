@@ -157,11 +157,15 @@ class SkinFixApp(
     min_concurrency=0,
     max_concurrency=5,
     name="skin-fix",
-    machine_type="GPU-H100",
-    image=custom_image,
-    requirements=["websockets", "websocket-client"],
-    private_logs=True
 ):
+    """Skin Fix - Advanced skin refinement and upscaling."""
+    
+    image = custom_image
+    machine_type = "GPU-H100"
+    requirements = ["websockets", "websocket-client"]
+
+    # 🔒 CRITICAL
+    private_logs = True
 
     def setup(self):
         # Download models
