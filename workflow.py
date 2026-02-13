@@ -81,16 +81,16 @@ WORKFLOW_JSON={
         "inputs": {
           "device": "cuda"
         },
-        "class_type": "FaceParsingModelLoader(FaceParsing)",
+        "class_type": "FaceParsingModelLoader",
         "_meta": {
-          "title": "FaceParsingModelLoader(FaceParsing)"
+          "title": "FaceParsingModelLoader"
         }
       },
       "7": {
         "inputs": {},
-        "class_type": "FaceParsingProcessorLoader(FaceParsing)",
+        "class_type": "FaceParsingProcessorLoader",
         "_meta": {
-          "title": "FaceParsingProcessorLoader(FaceParsing)"
+          "title": "FaceParsingProcessorLoader"
         }
       },
       "9": {
@@ -167,7 +167,7 @@ WORKFLOW_JSON={
             1
           ]
         },
-        "class_type": "FaceParsingResultsParser(FaceParsing)",
+        "class_type": "FaceParsingResultsParser",
         "_meta": {
           "title": "EXCLUSION"
         }
@@ -187,9 +187,9 @@ WORKFLOW_JSON={
             0
           ]
         },
-        "class_type": "FaceParse(FaceParsing)",
+        "class_type": "FaceParse",
         "_meta": {
-          "title": "FaceParse(FaceParsing)"
+          "title": "FaceParse"
         }
       },
       "16": {
