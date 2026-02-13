@@ -120,11 +120,7 @@ class SkinFixInput(BaseModel):
     image_url: str = Field(
         ...,
         title="Input Image",
-        description="URL of the image to enhance and upscale.",
-        examples=[
-            "https://images.unsplash.com/photo-1707661553213-df6e18dd54ad?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDExfHx8ZW58MHx8fHx8",
-            "https://images.pexels.com/photos/5077664/pexels-photo-5077664.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"
-        ]
+        description="URL of the image to enhance and upscale."
     )
 
     skin_preset: Literal[
