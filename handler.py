@@ -1,7 +1,7 @@
 import fal
 from fal.container import ContainerImage
 from fal.toolkit import Image
-from fastapi import Response, HTTPException
+from fastapi import Request, Response
 from pathlib import Path
 import json
 import uuid
@@ -12,12 +12,13 @@ import traceback
 import os
 import copy
 import random
+import tempfile
 from io import BytesIO
-from typing import Literal
 from PIL import Image as PILImage
+from pydantic import BaseModel, Field
+from typing import Literal
 from comfy_models import MODEL_LIST
 from workflow import WORKFLOW_JSON
-from pydantic import BaseModel, Field
 
 # -------------------------------------------------
 # Container setup
@@ -64,7 +65,14 @@ def download_if_missing(url, path):
     if os.path.exists(path):
         return
     ensure_dir(path)
-    with requests.get(url, stream=True) as r:
+    
+    # Add Hugging Face authentication if HF_TOKEN_k is available
+    headers = {}
+    hf_token = os.environ.get("HF_TOKEN_k") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
+    if hf_token and "huggingface.co" in url:
+        headers["Authorization"] = f"Bearer {hf_token}"
+    
+    with requests.get(url, stream=True, headers=headers) as r:
         r.raise_for_status()
         with open(path, "wb") as f:
             for chunk in r.iter_content(8192):
@@ -279,4 +287,6 @@ class SkinFixApp(
 
         except Exception as e:
             traceback.print_exc()
+            # Re-raise as HTTPException for proper error handling
+            from fastapi import HTTPException
             raise HTTPException(status_code=500, detail=str(e))
