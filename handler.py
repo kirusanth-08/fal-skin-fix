@@ -291,7 +291,14 @@ class SkinFixApp(
                 json={"prompt": workflow, "client_id": client_id},
                 timeout=30
             )
-            resp.raise_for_status()
+            
+            # Log detailed error if request fails
+            if resp.status_code != 200:
+                error_detail = resp.text
+                print(f"ComfyUI Error Response: {error_detail}")
+                from fastapi import HTTPException
+                raise HTTPException(status_code=500, detail=f"ComfyUI rejected workflow: {error_detail}")
+            
             prompt_id = resp.json()["prompt_id"]
 
             while True:
