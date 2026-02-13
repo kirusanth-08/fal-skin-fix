@@ -106,7 +106,11 @@ def upload_images(images):
 # Input Model (conditional UI already applied)
 # -------------------------------------------------
 class SkinFixInput(BaseModel):
-    image: Image = Field(title="Input Image")
+    image: Image = Field(
+        ...,
+        title="Input Image",
+        description="Upload an image to enhance and upscale"
+    )
 
     skin_preset: Literal[
         "none",
