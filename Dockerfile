@@ -62,12 +62,9 @@ RUN git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git /comfy
 # 2. ComfyUI Essentials v1.1.0 (from registry)
 RUN comfy --workspace /comfyui node install comfyui_essentials
 
-# 3. comfyui_face_parsing v1.0.5 (from git with commit hash - CRITICAL for class names)
-# Using latest commit from main branch that has (FaceParsing) suffix in class names
+# 3. comfyui_face_parsing v1.0.5 (from git latest - CRITICAL for class names)
 RUN git clone https://github.com/Ryuukeisyou/comfyui_face_parsing.git /comfyui/custom_nodes/comfyui_face_parsing \
-    && cd /comfyui/custom_nodes/comfyui_face_parsing \
-    && git checkout 2c7b4e8f0c5a8e9c8f7f5c3e5f8f5c3e5f8f5c3e \
-    && pip install -r requirements.txt
+    && pip install -r /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt
 
 # 4. ComfyUI LayerStyle Advance v2.0.37 (from registry)
 RUN comfy --workspace /comfyui node install ComfyUI_LayerStyle_Advance
