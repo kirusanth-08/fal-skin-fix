@@ -65,7 +65,7 @@ WORKFLOW_JSON={
           "decay_factor": 1,
           "fill_holes": False,
           "mask": [
-            "493",
+            "558",
             0
           ]
         },
@@ -148,7 +148,7 @@ WORKFLOW_JSON={
           "num_beams": 3,
           "do_sample": True,
           "output_mask_select": "",
-          "seed": 561288202204891,
+          "seed": 741411605227530,
           "image": [
             "548",
             0
@@ -161,37 +161,6 @@ WORKFLOW_JSON={
         "class_type": "Florence2Run",
         "_meta": {
           "title": "Florence2Run"
-        }
-      },
-      "493": {
-        "inputs": {
-          "background": False,
-          "skin": True,
-          "nose": True,
-          "eye_g": False,
-          "r_eye": True,
-          "l_eye": True,
-          "r_brow": False,
-          "l_brow": False,
-          "r_ear": False,
-          "l_ear": False,
-          "mouth": True,
-          "u_lip": True,
-          "l_lip": True,
-          "hair": False,
-          "hat": False,
-          "ear_r": False,
-          "neck_l": False,
-          "neck": False,
-          "cloth": False,
-          "result": [
-            "502",
-            1
-          ]
-        },
-        "class_type": "FaceParsingResultsParser(FaceParsing)",
-        "_meta": {
-          "title": "EXCLUSION"
         }
       },
       "494": {
@@ -253,7 +222,7 @@ WORKFLOW_JSON={
       },
       "504": {
         "inputs": {
-          "text_0": " human face<loc_387><loc_46><loc_611><loc_344>woman<loc_110><loc_0><loc_886><loc_998>  beautiful face, flawless smooth skin, clean natural skin texture, fine pores, subtle tone variation, soft complexion, radiant healthy skin, high detail skin texture, natural glow, photorealistic, masterpiece ",
+          "text_0": " human face<loc_386><loc_46><loc_609><loc_344>woman<loc_109><loc_0><loc_881><loc_998>  beautiful face, flawless smooth skin, clean natural skin texture, fine pores, subtle tone variation, soft complexion, radiant healthy skin, high detail skin texture, natural glow, photorealistic, masterpiece ",
           "text": [
             "506",
             0
@@ -335,7 +304,7 @@ WORKFLOW_JSON={
       },
       "510": {
         "inputs": {
-          "seed": 423920371179652,
+          "seed": 836357257026578,
           "steps": 30,
           "cfg": 2,
           "sampler_name": "dpmpp_2m",
@@ -459,7 +428,7 @@ WORKFLOW_JSON={
       },
       "545": {
         "inputs": {
-          "image": "de5c01cc.png"
+          "image": "body1__00004_.png"
         },
         "class_type": "LoadImage",
         "_meta": {
@@ -468,9 +437,9 @@ WORKFLOW_JSON={
       },
       "548": {
         "inputs": {
-          "seed": 347658136,
+          "seed": 2439781946,
           "resolution": 2048,
-          "max_resolution": 3072,
+          "max_resolution": 2048,
           "batch_size": 1,
           "uniform_batch_size": False,
           "color_correction": "lab",
@@ -537,6 +506,37 @@ WORKFLOW_JSON={
         "class_type": "FaceParsingProcessorLoader(FaceParsing)",
         "_meta": {
           "title": "FaceParsingProcessorLoader(FaceParsing)"
+        }
+      },
+      "558": {
+        "inputs": {
+          "background": False,
+          "skin": False,
+          "nose": False,
+          "eye_g": False,
+          "r_eye": True,
+          "l_eye": True,
+          "r_brow": False,
+          "l_brow": False,
+          "r_ear": False,
+          "l_ear": False,
+          "mouth": True,
+          "u_lip": True,
+          "l_lip": True,
+          "hair": False,
+          "hat": False,
+          "ear_r": False,
+          "neck_l": False,
+          "neck": False,
+          "cloth": False,
+          "result": [
+            "502",
+            1
+          ]
+        },
+        "class_type": "FaceParsingResultsParser(FaceParsing)",
+        "_meta": {
+          "title": "FaceParsingResultsParser(FaceParsing)"
         }
       }
     }
