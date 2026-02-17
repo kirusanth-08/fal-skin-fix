@@ -4,7 +4,7 @@ MODEL_LIST = [
     # 1. MAIN SKIN CHECKPOINT (CUSTOM)
     # =======================================================
     {
-        "url": "https://huggingface.co/alexShangeeth/LastFamedmd2/resolve/main/epicrealismXL_vxviLastfameDMD2.safetensors",
+        "url": "https://huggingface.co/alexShangeeth/LastFamedmd2/resolve/main/VXVI_LastFame_DMD2.safetensors",
         "path": "/data/models/checkpoints/epicrealismXL_vxviLastfameDMD2.safetensors",
         "target": "/comfyui/models/checkpoints/epicrealismXL_vxviLastfameDMD2.safetensors"
     },
