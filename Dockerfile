@@ -100,10 +100,9 @@ RUN git clone https://github.com/rgthree/rgthree-comfy.git /comfyui/custom_nodes
     && git checkout 8ff50e4521881eca1fe26aec9615fc9362474931 \
     && pip install -r requirements.txt
 
-# Optional nodes from snapshot (may not be essential but present in working env)
-# 11. ComfyUI-Manager (from git with specific hash)
-RUN git clone https://github.com/ltdrdata/ComfyUI-Manager.git /comfyui/custom_nodes/ComfyUI-Manager \
-    && cd /comfyui/custom_nodes/ComfyUI-Manager \
+# Update ComfyUI-Manager to snapshot version (already installed by ComfyUI)
+RUN cd /comfyui/custom_nodes/ComfyUI-Manager \
+    && git fetch \
     && git checkout 77377eeddb3d81867c062f1bee122a395e2e8278
 
 # ---------------------------------------------------------
