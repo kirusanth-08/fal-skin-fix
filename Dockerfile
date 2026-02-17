@@ -45,7 +45,7 @@ WORKDIR /comfyui
 # Extra dependencies
 # ---------------------------------------------------------
 RUN pip install requests websocket-client sageattention \
-    accelerate transformers opencv-python insightface onnxruntime-gpu==1.18.0
+    accelerate transformers insightface onnxruntime-gpu==1.18.0
 
 # FIX: Add missing websocket packages for fal run
 RUN pip install websocket-client websockets
@@ -62,10 +62,13 @@ RUN git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git /comfy
 RUN git clone https://github.com/cubiq/ComfyUI_essentials.git /comfyui/custom_nodes/ComfyUI_essentials \
     && pip install -r /comfyui/custom_nodes/ComfyUI_essentials/requirements.txt
 
-# 3. comfyui_face_parsing (HAS requirements)
+# 3. comfyui_face_parsing (HAS requirements) - MUST install opencv-contrib-python LAST to avoid conflicts
 RUN git clone https://github.com/Ryuukeisyou/comfyui_face_parsing.git /comfyui/custom_nodes/comfyui_face_parsing \
-    && cd /comfyui/custom_nodes/comfyui_face_parsing \
-    && pip install -r requirements.txt
+    && pip install -r /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt
+
+# FIX: Reinstall opencv-contrib-python to fix conflicts (face_parsing requires it)
+RUN pip uninstall -y opencv-python opencv-python-headless opencv-contrib-python 2>/dev/null || true \
+    && pip install opencv-contrib-python
 
 # 4. ComfyUI LayerStyle Advance (HAS requirements)
 RUN git clone https://github.com/chflame163/ComfyUI_LayerStyle_Advance.git /comfyui/custom_nodes/ComfyUI_LayerStyle_Advance \
@@ -98,6 +101,15 @@ RUN git clone https://github.com/rgthree/rgthree-comfy.git /comfyui/custom_nodes
 # 11. SeedVR2 Upscaler – alex-node-final (HAS requirements)
 RUN git clone https://github.com/shangeethAlex/alex-node-final.git /comfyui/custom_nodes/ComfyUI-SeedVR2 \
     && pip install -r /comfyui/custom_nodes/ComfyUI-SeedVR2/requirements.txt
+
+# ---------------------------------------------------------
+# Pre-download face_parsing models (required by comfyui_face_parsing)
+# ---------------------------------------------------------
+RUN mkdir -p /comfyui/models/face_parsing /comfyui/models/ultralytics/bbox \
+    && wget -q -O /comfyui/models/face_parsing/model.safetensors "https://huggingface.co/jonathandinu/face-parsing/resolve/main/model.safetensors" \
+    && wget -q -O /comfyui/models/face_parsing/config.json "https://huggingface.co/jonathandinu/face-parsing/resolve/main/config.json" \
+    && wget -q -O /comfyui/models/face_parsing/preprocessor_config.json "https://huggingface.co/jonathandinu/face-parsing/resolve/main/preprocessor_config.json" \
+    && wget -q -O /comfyui/models/ultralytics/bbox/face_yolov8m.pt "https://huggingface.co/Bingsu/adetailer/resolve/main/face_yolov8m.pt"
 
 # ---------------------------------------------------------
 # fal Runtime Requirements
