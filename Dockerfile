@@ -55,8 +55,7 @@ RUN pip install websocket-client websockets
 # ---------------------------------------------------------
 
 # Install CNR (ComfyUI Registry) packages - matching working RunPod snapshot versions
-RUN comfy --workspace /comfyui node install comfyui_face_parsing@1.0.5 \
-    && comfy --workspace /comfyui node install ComfyUI_LayerStyle_Advance@2.0.37 \
+RUN comfy --workspace /comfyui node install ComfyUI_LayerStyle_Advance@2.0.37 \
     && comfy --workspace /comfyui node install comfyui_essentials@1.1.0 \
     && comfy --workspace /comfyui node install seedvr2_videoupscaler@2.5.24 \
     && comfy --workspace /comfyui node install comfyui-custom-scripts@1.2.5
@@ -67,6 +66,12 @@ RUN git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git /comfy
     && cd /comfyui/custom_nodes/ComfyUI_Comfyroll_CustomNodes \
     && git checkout d78b780ae43fcf8c6b7c6505e6ffb4584281ceca \
     && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+# 1a. ComfyUI Face Parsing (Ryuukeisyou version) - provides FaceParsingModelLoader and FaceParsingResultsParser
+RUN git clone https://github.com/Ryuukeisyou/comfyui_face_parsing.git /comfyui/custom_nodes/comfyui_face_parsing \
+    && cd /comfyui/custom_nodes/comfyui_face_parsing \
+    && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi \
+    && python3 -c "import sys; sys.path.insert(0, '/comfyui/custom_nodes/comfyui_face_parsing'); from nodes import FaceParsingModelLoader; print('✓ FaceParsingModelLoader node found')" || (echo "✗ FaceParsingModelLoader node check failed" && exit 1)
 
 # 2. ComfyUI Florence2
 RUN git clone https://github.com/kijai/ComfyUI-Florence2.git /comfyui/custom_nodes/ComfyUI-Florence2 \
@@ -97,7 +102,7 @@ RUN git clone https://github.com/rgthree/rgthree-comfy.git /comfyui/custom_nodes
     && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
 # ---------------------------------------------------------
-# Pre-download face_parsing models (required by comfyui_face_parsing CNR package)
+# Pre-download face_parsing models (required by Ryuukeisyou comfyui_face_parsing)
 # ---------------------------------------------------------
 RUN mkdir -p /comfyui/models/face_parsing /comfyui/models/ultralytics/bbox \
     && wget -q -O /comfyui/models/face_parsing/model.safetensors "https://huggingface.co/jonathandinu/face-parsing/resolve/main/model.safetensors" \
