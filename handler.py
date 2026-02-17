@@ -184,7 +184,7 @@ class SkinFixApp(
     requirements = ["websockets", "websocket-client"]
 
     # 🔒 CRITICAL
-    private_logs = True
+    private_logs = False  # Set to True if logs may contain sensitive info (e.g. image URLs)
 
     def setup(self):
         # Print GPU info
