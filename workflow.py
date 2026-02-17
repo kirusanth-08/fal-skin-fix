@@ -166,13 +166,13 @@ WORKFLOW_JSON={
       "493": {
         "inputs": {
           "background": False,
-          "skin": False,
-          "nose": False,
+          "skin": True,
+          "nose": True,
           "eye_g": False,
           "r_eye": True,
           "l_eye": True,
-          "r_brow": True,
-          "l_brow": True,
+          "r_brow": False,
+          "l_brow": False,
           "r_ear": False,
           "l_ear": False,
           "mouth": True,
@@ -190,6 +190,9 @@ WORKFLOW_JSON={
           ]
         },
         "class_type": "FaceParsingResultsParser(FaceParsing)",
+        "_meta": {
+          "title": "EXCLUSION"
+        }
       },
       "494": {
         "inputs": {
@@ -228,13 +231,6 @@ WORKFLOW_JSON={
           "title": "FaceParsingModelLoader(FaceParsing)"
         }
       },
-      "500": {
-        "inputs": {},
-        "class_type": "FaceParsingProcessorLoader(FaceParsing)",
-        "_meta": {
-          "title": "FaceParsingProcessorLoader(FaceParsing)"
-        }
-      },
       "502": {
         "inputs": {
           "model": [
@@ -242,7 +238,7 @@ WORKFLOW_JSON={
             0
           ],
           "processor": [
-            "500",
+            "554",
             0
           ],
           "image": [
@@ -534,6 +530,13 @@ WORKFLOW_JSON={
         "class_type": "SeedVR2LoadDiTModel",
         "_meta": {
           "title": "SeedVR2 (Down)Load DiT Model"
+        }
+      },
+      "554": {
+        "inputs": {},
+        "class_type": "FaceParsingProcessorLoader(FaceParsing)",
+        "_meta": {
+          "title": "FaceParsingProcessorLoader(FaceParsing)"
         }
       }
     }
