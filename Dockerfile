@@ -54,51 +54,53 @@ RUN pip install websocket-client websockets
 # Skin v03 / ComfyUI Custom Nodes
 # ---------------------------------------------------------
 
-# Install CNR (ComfyUI Registry) packages - matching working RunPod snapshot versions
-RUN comfy --workspace /comfyui node install comfyui_face_parsing@1.0.5 \
-    && comfy --workspace /comfyui node install ComfyUI_LayerStyle_Advance@2.0.37 \
-    && comfy --workspace /comfyui node install comfyui_essentials@1.1.0 \
-    && comfy --workspace /comfyui node install seedvr2_videoupscaler@2.5.24 \
-    && comfy --workspace /comfyui node install comfyui-custom-scripts@1.2.5
-
-# 1. ComfyRoll Custom Nodes (git - not in CNR with matching version)
+# 1. ComfyRoll Custom Nodes (NO requirements.txt)
 RUN git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git /comfyui/custom_nodes/ComfyUI_Comfyroll_CustomNodes \
-    && cd /comfyui/custom_nodes/ComfyUI_Comfyroll_CustomNodes \
-    && git checkout d78b780ae43fcf8c6b7c6505e6ffb4584281ceca
+    && true
+
+# 2. ComfyUI Essentials (HAS requirements)
+RUN git clone https://github.com/cubiq/ComfyUI_essentials.git /comfyui/custom_nodes/ComfyUI_essentials \
+    && pip install -r /comfyui/custom_nodes/ComfyUI_essentials/requirements.txt
+
+# 3. comfyui_face_parsing (HAS requirements) - MUST install opencv-contrib-python LAST to avoid conflicts
+RUN git clone https://github.com/Ryuukeisyou/comfyui_face_parsing.git /comfyui/custom_nodes/comfyui_face_parsing \
+    && pip install -r /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt
+
+# FIX: Reinstall opencv-contrib-python to fix conflicts (face_parsing requires it)
+RUN pip uninstall -y opencv-python opencv-python-headless opencv-contrib-python 2>/dev/null || true \
+    && pip install opencv-contrib-python
+
+# 4. ComfyUI LayerStyle Advance (HAS requirements)
+RUN git clone https://github.com/chflame163/ComfyUI_LayerStyle_Advance.git /comfyui/custom_nodes/ComfyUI_LayerStyle_Advance \
+    && pip install -r /comfyui/custom_nodes/ComfyUI_LayerStyle_Advance/requirements.txt
+
+# 5. comfyui-custom-scripts (NO requirements)
+RUN git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git /comfyui/custom_nodes/ComfyUI-Custom-Scripts \
+    && true
 
 # 6. ComfyUI Florence2 (HAS requirements)
 RUN git clone https://github.com/kijai/ComfyUI-Florence2.git /comfyui/custom_nodes/ComfyUI-Florence2 \
     && pip install -r /comfyui/custom_nodes/ComfyUI-Florence2/requirements.txt
 
-# 7. ComfyUI KJNodes (pinned to snapshot hash)
+# 7. ComfyUI KJNodes (HAS requirements)
 RUN git clone https://github.com/kijai/ComfyUI-KJNodes.git /comfyui/custom_nodes/ComfyUI-KJNodes \
-    && cd /comfyui/custom_nodes/ComfyUI-KJNodes \
-    && git checkout 50a0837f9aea602b184bbf6dbabf66ed2c7a1d22 \
-    && pip install -r requirements.txt
+    && pip install -r /comfyui/custom_nodes/ComfyUI-KJNodes/requirements.txt
 
 # 8. ComfyUI Post-Processing Nodes (NO requirements)
 RUN git clone https://github.com/EllangoK/ComfyUI-post-processing-nodes.git /comfyui/custom_nodes/ComfyUI-post-processing-nodes \
     && true
 
-# 9. Masquerade Nodes (pinned to snapshot hash)
+# 9. Masquerade Nodes (NO requirements)
 RUN git clone https://github.com/BadCafeCode/masquerade-nodes-comfyui.git /comfyui/custom_nodes/masquerade-nodes-comfyui \
-    && cd /comfyui/custom_nodes/masquerade-nodes-comfyui \
-    && git checkout 432cb4d146a391b387a0cd25ace824328b5b61cf
+    && true
 
-# 10. rgthree – Power Lora Loader (pinned to snapshot hash)
+# 10. rgthree – Power Lora Loader (HAS requirements)
 RUN git clone https://github.com/rgthree/rgthree-comfy.git /comfyui/custom_nodes/rgthree-comfy \
-    && cd /comfyui/custom_nodes/rgthree-comfy \
-    && git checkout 8ff50e4521881eca1fe26aec9615fc9362474931 \
-    && pip install -r requirements.txt
+    && pip install -r /comfyui/custom_nodes/rgthree-comfy/requirements.txt
 
-# ---------------------------------------------------------
-# Pre-download face_parsing models (required by comfyui_face_parsing CNR package)
-# ---------------------------------------------------------
-RUN mkdir -p /comfyui/models/face_parsing /comfyui/models/ultralytics/bbox \
-    && wget -q -O /comfyui/models/face_parsing/model.safetensors "https://huggingface.co/jonathandinu/face-parsing/resolve/main/model.safetensors" \
-    && wget -q -O /comfyui/models/face_parsing/config.json "https://huggingface.co/jonathandinu/face-parsing/resolve/main/config.json" \
-    && wget -q -O /comfyui/models/face_parsing/preprocessor_config.json "https://huggingface.co/jonathandinu/face-parsing/resolve/main/preprocessor_config.json" \
-    && wget -q -O /comfyui/models/ultralytics/bbox/face_yolov8m.pt "https://huggingface.co/Bingsu/adetailer/resolve/main/face_yolov8m.pt"
+# 11. SeedVR2 Upscaler – alex-node-final (HAS requirements)
+RUN git clone https://github.com/shangeethAlex/alex-node-final.git /comfyui/custom_nodes/ComfyUI-SeedVR2 \
+    && pip install -r /comfyui/custom_nodes/ComfyUI-SeedVR2/requirements.txt
 
 # ---------------------------------------------------------
 # fal Runtime Requirements
