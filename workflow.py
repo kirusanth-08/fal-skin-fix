@@ -5,19 +5,19 @@ WORKFLOW_JSON={
     "customModels": [],
     "images": [
       {
-        "name": "01.jpg",
+        "name": "de5c01cc.png",
         "image": "base64.."
       }
     ],
     "workflow": {
-      "1": {
+      "476": {
         "inputs": {
           "samples": [
-            "10",
+            "530",
             0
           ],
           "mask": [
-            "28",
+            "533",
             1
           ]
         },
@@ -26,10 +26,10 @@ WORKFLOW_JSON={
           "title": "Set Latent Noise Mask"
         }
       },
-      "2": {
+      "478": {
         "inputs": {
           "mask": [
-            "13",
+            "481",
             0
           ]
         },
@@ -38,14 +38,14 @@ WORKFLOW_JSON={
           "title": "Convert Mask to Image"
         }
       },
-      "3": {
+      "479": {
         "inputs": {
           "samples": [
-            "29",
+            "510",
             0
           ],
           "vae": [
-            "24",
+            "520",
             2
           ]
         },
@@ -54,74 +54,7 @@ WORKFLOW_JSON={
           "title": "VAE Decode"
         }
       },
-      "5": {
-        "inputs": {
-          "text1": "BEFORE",
-          "text2": "AFTER",
-          "footer_height": 100,
-          "font_name": "impact.ttf",
-          "font_size": 50,
-          "mode": "dark",
-          "border_thickness": 20,
-          "image1": [
-            "30",
-            0
-          ],
-          "image2": [
-            "23",
-            0
-          ]
-        },
-        "class_type": "CR Simple Image Compare",
-        "_meta": {
-          "title": "📱 CR Simple Image Compare"
-        }
-      },
-      "6": {
-        "inputs": {
-          "device": "cuda"
-        },
-        "class_type": "FaceParsingModelLoader",
-        "_meta": {
-          "title": "FaceParsingModelLoader"
-        }
-      },
-      "7": {
-        "inputs": {},
-        "class_type": "FaceParsingProcessorLoader",
-        "_meta": {
-          "title": "FaceParsingProcessorLoader"
-        }
-      },
-      "9": {
-        "inputs": {
-          "text": [
-            "26",
-            0
-          ]
-        },
-        "class_type": "ShowText|pysssss",
-        "_meta": {
-          "title": "Show Text 🐍"
-        }
-      },
-      "10": {
-        "inputs": {
-          "pixels": [
-            "30",
-            0
-          ],
-          "vae": [
-            "24",
-            2
-          ]
-        },
-        "class_type": "VAEEncode",
-        "_meta": {
-          "title": "VAE Encode"
-        }
-      },
-      "13": {
+      "481": {
         "inputs": {
           "expand": -5,
           "incremental_expandrate": 0,
@@ -132,7 +65,7 @@ WORKFLOW_JSON={
           "decay_factor": 1,
           "fill_holes": False,
           "mask": [
-            "14",
+            "493",
             0
           ]
         },
@@ -141,7 +74,96 @@ WORKFLOW_JSON={
           "title": "Grow Mask With Blur"
         }
       },
-      "14": {
+      "482": {
+        "inputs": {
+          "force_resize_width": 0,
+          "force_resize_height": 0,
+          "image": [
+            "479",
+            0
+          ],
+          "mask": [
+            "478",
+            0
+          ]
+        },
+        "class_type": "Cut By Mask",
+        "_meta": {
+          "title": "Cut By Mask"
+        }
+      },
+      "483": {
+        "inputs": {
+          "text1": "BEFORE",
+          "text2": "AFTER",
+          "footer_height": 100,
+          "font_name": "impact.ttf",
+          "font_size": 50,
+          "mode": "dark",
+          "border_thickness": 20,
+          "image1": [
+            "548",
+            0
+          ],
+          "image2": [
+            "485",
+            0
+          ]
+        },
+        "class_type": "CR Simple Image Compare",
+        "_meta": {
+          "title": "📱 CR Simple Image Compare"
+        }
+      },
+      "485": {
+        "inputs": {
+          "x": 0,
+          "y": 0,
+          "resize_source": False,
+          "destination": [
+            "479",
+            0
+          ],
+          "source": [
+            "548",
+            0
+          ],
+          "mask": [
+            "481",
+            0
+          ]
+        },
+        "class_type": "ImageCompositeMasked",
+        "_meta": {
+          "title": "ImageCompositeMasked"
+        }
+      },
+      "487": {
+        "inputs": {
+          "text_input": "",
+          "task": "region_caption",
+          "fill_mask": True,
+          "keep_model_loaded": False,
+          "max_new_tokens": 1024,
+          "num_beams": 3,
+          "do_sample": True,
+          "output_mask_select": "",
+          "seed": 561288202204891,
+          "image": [
+            "548",
+            0
+          ],
+          "florence2_model": [
+            "494",
+            0
+          ]
+        },
+        "class_type": "Florence2Run",
+        "_meta": {
+          "title": "Florence2Run"
+        }
+      },
+      "493": {
         "inputs": {
           "background": False,
           "skin": False,
@@ -163,137 +185,16 @@ WORKFLOW_JSON={
           "neck": False,
           "cloth": False,
           "result": [
-            "15",
+            "502",
             1
           ]
         },
-        "class_type": "FaceParsingResultsParser",
+        "class_type": "FaceParsingResultsParser(FaceParsing)",
         "_meta": {
           "title": "EXCLUSION"
         }
       },
-      "15": {
-        "inputs": {
-          "model": [
-            "6",
-            0
-          ],
-          "processor": [
-            "7",
-            0
-          ],
-          "image": [
-            "3",
-            0
-          ]
-        },
-        "class_type": "FaceParse",
-        "_meta": {
-          "title": "FaceParse"
-        }
-      },
-      "16": {
-        "inputs": {
-          "force_resize_width": 0,
-          "force_resize_height": 0,
-          "image": [
-            "3",
-            0
-          ],
-          "mask": [
-            "2",
-            0
-          ]
-        },
-        "class_type": "Cut By Mask",
-        "_meta": {
-          "title": "Cut By Mask"
-        }
-      },
-      "17": {
-        "inputs": {
-          "text_input": "",
-          "task": "region_caption",
-          "fill_mask": True,
-          "keep_model_loaded": False,
-          "max_new_tokens": 1024,
-          "num_beams": 3,
-          "do_sample": True,
-          "output_mask_select": "",
-          "seed": 767440173469992,
-          "image": [
-            "30",
-            0
-          ],
-          "florence2_model": [
-            "22",
-            0
-          ]
-        },
-        "class_type": "Florence2Run",
-        "_meta": {
-          "title": "Florence2Run"
-        }
-      },
-      "18": {
-        "inputs": {
-          "amount": 0.4,
-          "image": [
-            "19",
-            0
-          ]
-        },
-        "class_type": "ImageCASharpening+",
-        "_meta": {
-          "title": "🔧 Image Contrast Adaptive Sharpening"
-        }
-      },
-      "19": {
-        "inputs": {
-          "intensity": 0.03,
-          "scale": 10,
-          "temperature": 0,
-          "vignette": 0,
-          "image": [
-            "23",
-            0
-          ]
-        },
-        "class_type": "FilmGrain",
-        "_meta": {
-          "title": "Film Grain Effect"
-        }
-      },
-      "20": {
-        "inputs": {
-          "text": [
-            "26",
-            0
-          ],
-          "clip": [
-            "27",
-            1
-          ]
-        },
-        "class_type": "CLIPTextEncode",
-        "_meta": {
-          "title": "CLIP Text Encode (Prompt)"
-        }
-      },
-      "21": {
-        "inputs": {
-          "filename_prefix": "body1_",
-          "images": [
-            "18",
-            0
-          ]
-        },
-        "class_type": "SaveImage",
-        "_meta": {
-          "title": "Save Image"
-        }
-      },
-      "22": {
+      "494": {
         "inputs": {
           "model": "microsoft/Florence-2-base",
           "precision": "fp16",
@@ -305,56 +206,76 @@ WORKFLOW_JSON={
           "title": "DownloadAndLoadFlorence2Model"
         }
       },
-      "23": {
+      "497": {
         "inputs": {
-          "x": 0,
-          "y": 0,
-          "resize_source": False,
-          "destination": [
-            "3",
+          "text": [
+            "506",
             0
           ],
-          "source": [
-            "30",
-            0
-          ],
-          "mask": [
-            "13",
-            0
-          ]
-        },
-        "class_type": "ImageCompositeMasked",
-        "_meta": {
-          "title": "ImageCompositeMasked"
-        }
-      },
-      "24": {
-        "inputs": {
-          "ckpt_name": "VXVI_LastFame_DMD2.safetensors"
-        },
-        "class_type": "CheckpointLoaderSimple",
-        "_meta": {
-          "title": "Load Checkpoint"
-        }
-      },
-      "25": {
-        "inputs": {
-          "text": "redness, rash, wrinkles, oily skin, pores enlarged, rough texture, plastic skin, waxy skin, airbrushed, fake textures, lowres, blurry, deformed face, face morph, cartoon, cgi, 3d render, doll-like, blur",
           "clip": [
-            "27",
+            "509",
             1
           ]
         },
         "class_type": "CLIPTextEncode",
         "_meta": {
-          "title": "NEGATIVE"
+          "title": "CLIP Text Encode (Prompt)"
         }
       },
-      "26": {
+      "499": {
+        "inputs": {
+          "device": "cuda"
+        },
+        "class_type": "FaceParsingModelLoader(FaceParsing)",
+        "_meta": {
+          "title": "FaceParsingModelLoader(FaceParsing)"
+        }
+      },
+      "500": {
+        "inputs": {},
+        "class_type": "FaceParsingProcessorLoader(FaceParsing)",
+        "_meta": {
+          "title": "FaceParsingProcessorLoader(FaceParsing)"
+        }
+      },
+      "502": {
+        "inputs": {
+          "model": [
+            "499",
+            0
+          ],
+          "processor": [
+            "500",
+            0
+          ],
+          "image": [
+            "479",
+            0
+          ]
+        },
+        "class_type": "FaceParse(FaceParsing)",
+        "_meta": {
+          "title": "FaceParse(FaceParsing)"
+        }
+      },
+      "504": {
+        "inputs": {
+          "text_0": " human face<loc_387><loc_46><loc_611><loc_344>woman<loc_110><loc_0><loc_886><loc_998>  beautiful face, flawless smooth skin, clean natural skin texture, fine pores, subtle tone variation, soft complexion, radiant healthy skin, high detail skin texture, natural glow, photorealistic, masterpiece ",
+          "text": [
+            "506",
+            0
+          ]
+        },
+        "class_type": "ShowText|pysssss",
+        "_meta": {
+          "title": "Show Text 🐍"
+        }
+      },
+      "506": {
         "inputs": {
           "part1": "",
           "part2": [
-            "17",
+            "487",
             2
           ],
           "part3": " beautiful face, flawless smooth skin, clean natural skin texture, fine pores, subtle tone variation, soft complexion, radiant healthy skin, high detail skin texture, natural glow, photorealistic, masterpiece",
@@ -366,7 +287,20 @@ WORKFLOW_JSON={
           "title": "⚙️ CR Combine Prompt"
         }
       },
-      "27": {
+      "507": {
+        "inputs": {
+          "text": "redness, rash, wrinkles, oily skin, pores enlarged, rough texture, plastic skin, waxy skin, airbrushed, fake textures, lowres, blurry, deformed face, face morph, cartoon, cgi, 3d render, doll-like, blur",
+          "clip": [
+            "509",
+            1
+          ]
+        },
+        "class_type": "CLIPTextEncode",
+        "_meta": {
+          "title": "NEGATIVE"
+        }
+      },
+      "509": {
         "inputs": {
           "PowerLoraLoaderHeaderWidget": {
             "type": "PowerLoraLoaderHeaderWidget"
@@ -393,11 +327,11 @@ WORKFLOW_JSON={
           },
           "➕ Add Lora": "",
           "model": [
-            "24",
+            "520",
             0
           ],
           "clip": [
-            "24",
+            "520",
             1
           ]
         },
@@ -406,7 +340,104 @@ WORKFLOW_JSON={
           "title": "Power Lora Loader (rgthree)"
         }
       },
-      "28": {
+      "510": {
+        "inputs": {
+          "seed": 423920371179652,
+          "steps": 30,
+          "cfg": 2,
+          "sampler_name": "dpmpp_2m",
+          "scheduler": "karras",
+          "denoise": 0.3,
+          "model": [
+            "509",
+            0
+          ],
+          "positive": [
+            "497",
+            0
+          ],
+          "negative": [
+            "507",
+            0
+          ],
+          "latent_image": [
+            "476",
+            0
+          ]
+        },
+        "class_type": "KSampler",
+        "_meta": {
+          "title": "KSampler"
+        }
+      },
+      "512": {
+        "inputs": {
+          "amount": 0.4,
+          "image": [
+            "515",
+            0
+          ]
+        },
+        "class_type": "ImageCASharpening+",
+        "_meta": {
+          "title": "🔧 Image Contrast Adaptive Sharpening"
+        }
+      },
+      "515": {
+        "inputs": {
+          "intensity": 0.03,
+          "scale": 10,
+          "temperature": 0,
+          "vignette": 0,
+          "image": [
+            "485",
+            0
+          ]
+        },
+        "class_type": "FilmGrain",
+        "_meta": {
+          "title": "FilmGrain"
+        }
+      },
+      "520": {
+        "inputs": {
+          "ckpt_name": "epicrealismXL_vxviLastfameDMD2.safetensors"
+        },
+        "class_type": "CheckpointLoaderSimple",
+        "_meta": {
+          "title": "Load Checkpoint"
+        }
+      },
+      "525": {
+        "inputs": {
+          "filename_prefix": "body1_",
+          "images": [
+            "512",
+            0
+          ]
+        },
+        "class_type": "SaveImage",
+        "_meta": {
+          "title": "Save Image"
+        }
+      },
+      "530": {
+        "inputs": {
+          "pixels": [
+            "548",
+            0
+          ],
+          "vae": [
+            "520",
+            2
+          ]
+        },
+        "class_type": "VAEEncode",
+        "_meta": {
+          "title": "VAE Encode"
+        }
+      },
+      "533": {
         "inputs": {
           "face": True,
           "hair": False,
@@ -424,7 +455,7 @@ WORKFLOW_JSON={
           "device": "cuda",
           "max_megapixels": 2,
           "images": [
-            "30",
+            "548",
             0
           ]
         },
@@ -433,95 +464,79 @@ WORKFLOW_JSON={
           "title": "LayerMask: PersonMaskUltra V2(Advance)"
         }
       },
-      "29": {
+      "545": {
         "inputs": {
-          "seed": 179859358044891,
-          "steps": 30,
-          "cfg": 2,
-          "sampler_name": "dpmpp_2m",
-          "scheduler": "karras",
-          "denoise": 0.3,
-          "model": [
-            "27",
-            0
-          ],
-          "positive": [
-            "20",
-            0
-          ],
-          "negative": [
-            "25",
-            0
-          ],
-          "latent_image": [
-            "1",
-            0
-          ]
-        },
-        "class_type": "KSampler",
-        "_meta": {
-          "title": "KSampler"
-        }
-      },
-      "30": {
-        "inputs": {
-          "model": "seedvr2_ema_7b_fp16.safetensors",
-          "seed": 3524851102,
-          "new_resolution": 2048,
-          "batch_size": 5,
-          "color_correction": "none",
-          "input_noise_scale": 0,
-          "latent_noise_scale": 0.03,
-          "images": [
-            "32",
-            0
-          ],
-          "block_swap_config": [
-            "33",
-            0
-          ],
-          "extra_args": [
-            "31",
-            0
-          ]
-        },
-        "class_type": "SeedVR2",
-        "_meta": {
-          "title": "SeedVR2 Video Upscaler"
-        }
-      },
-      "31": {
-        "inputs": {
-          "tiled_vae": True,
-          "vae_tile_size": 1024,
-          "vae_tile_overlap": 128,
-          "preserve_vram": True,
-          "cache_model": True,
-          "enable_debug": False,
-          "device": "cuda:0"
-        },
-        "class_type": "SeedVR2ExtraArgs",
-        "_meta": {
-          "title": "SeedVR2 Extra Args"
-        }
-      },
-      "32": {
-        "inputs": {
-          "image": "01.jpg"
+          "image": "de5c01cc.png"
         },
         "class_type": "LoadImage",
         "_meta": {
           "title": "Load Image"
         }
       },
-      "33": {
+      "548": {
         "inputs": {
-          "blocks_to_swap": 15,
-          "offload_io_components": True
+          "seed": 347658136,
+          "resolution": 2048,
+          "max_resolution": 2048,
+          "batch_size": 1,
+          "uniform_batch_size": False,
+          "color_correction": "lab",
+          "temporal_overlap": 0,
+          "prepend_frames": 0,
+          "input_noise_scale": 0,
+          "latent_noise_scale": 0,
+          "offload_device": "cuda:0",
+          "enable_debug": False,
+          "image": [
+            "545",
+            0
+          ],
+          "dit": [
+            "550",
+            0
+          ],
+          "vae": [
+            "549",
+            0
+          ]
         },
-        "class_type": "SeedVR2BlockSwap",
+        "class_type": "SeedVR2VideoUpscaler",
         "_meta": {
-          "title": "SeedVR2 BlockSwap Config"
+          "title": "SeedVR2 Video Upscaler (v2.5.24)"
+        }
+      },
+      "549": {
+        "inputs": {
+          "model": "ema_vae_fp16.safetensors",
+          "device": "cuda:0",
+          "encode_tiled": False,
+          "encode_tile_size": 1024,
+          "encode_tile_overlap": 128,
+          "decode_tiled": False,
+          "decode_tile_size": 1024,
+          "decode_tile_overlap": 128,
+          "tile_debug": "false",
+          "offload_device": "none",
+          "cache_model": False
+        },
+        "class_type": "SeedVR2LoadVAEModel",
+        "_meta": {
+          "title": "SeedVR2 (Down)Load VAE Model"
+        }
+      },
+      "550": {
+        "inputs": {
+          "model": "seedvr2_ema_7b_fp16.safetensors",
+          "device": "cuda:0",
+          "blocks_to_swap": 0,
+          "swap_io_components": False,
+          "offload_device": "none",
+          "cache_model": False,
+          "attention_mode": "sdpa"
+        },
+        "class_type": "SeedVR2LoadDiTModel",
+        "_meta": {
+          "title": "SeedVR2 (Down)Load DiT Model"
         }
       }
     }
