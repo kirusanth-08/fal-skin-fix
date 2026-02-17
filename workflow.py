@@ -193,7 +193,7 @@ WORKFLOW_JSON={
       },
       "504": {
         "inputs": {
-          "text_0": " human face<loc_386><loc_46><loc_609><loc_344>woman<loc_101><loc_0><loc_888><loc_998>  beautiful face, flawless smooth skin, clean natural skin texture, fine pores, subtle tone variation, soft complexion, radiant healthy skin, high detail skin texture, natural glow, photorealistic, masterpiece ",
+          "text_0": " human face<loc_386><loc_47><loc_609><loc_345>woman<loc_106><loc_0><loc_887><loc_998>  beautiful face, flawless smooth skin, clean natural skin texture, fine pores, subtle tone variation, soft complexion, radiant healthy skin, high detail skin texture, natural glow, photorealistic, masterpiece ",
           "text": [
             "506",
             0
@@ -472,13 +472,6 @@ WORKFLOW_JSON={
           "title": "SeedVR2 (Down)Load DiT Model"
         }
       },
-      "554": {
-        "inputs": {},
-        "class_type": "FaceParsingProcessorLoader",
-        "_meta": {
-          "title": "FaceParsingProcessorLoader(FaceParsing)"
-        }
-      },
       "558": {
         "inputs": {
           "background": False,
@@ -505,7 +498,7 @@ WORKFLOW_JSON={
             1
           ]
         },
-        "class_type": "FaceParsingResultsParser",
+        "class_type": "FaceParsingResultsParser(FaceParsing)",
         "_meta": {
           "title": "FaceParsingResultsParser(FaceParsing)"
         }
@@ -514,7 +507,7 @@ WORKFLOW_JSON={
         "inputs": {
           "device": "cuda"
         },
-        "class_type": "FaceParsingModelLoader",
+        "class_type": "FaceParsingModelLoader(FaceParsing)",
         "_meta": {
           "title": "FaceParsingModelLoader(FaceParsing)"
         }
@@ -526,7 +519,7 @@ WORKFLOW_JSON={
             0
           ],
           "processor": [
-            "554",
+            "561",
             0
           ],
           "image": [
@@ -534,9 +527,16 @@ WORKFLOW_JSON={
             0
           ]
         },
-        "class_type": "FaceParse",
+        "class_type": "FaceParse(FaceParsing)",
         "_meta": {
           "title": "FaceParse(FaceParsing)"
+        }
+      },
+      "561": {
+        "inputs": {},
+        "class_type": "FaceParsingProcessorLoader(FaceParsing)",
+        "_meta": {
+          "title": "FaceParsingProcessorLoader(FaceParsing)"
         }
       }
     }
