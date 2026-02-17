@@ -190,9 +190,6 @@ WORKFLOW_JSON={
           ]
         },
         "class_type": "FaceParsingResultsParser(FaceParsing)",
-        "_meta": {
-          "title": "EXCLUSION"
-        }
       },
       "494": {
         "inputs": {
