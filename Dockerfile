@@ -54,9 +54,12 @@ RUN pip install websocket-client websockets
 # Skin v03 / ComfyUI Custom Nodes
 # ---------------------------------------------------------
 
+# Vendored comfyui_face_parsing (kept in repo to avoid network install issues)
+COPY custom_nodes/comfyui_face_parsing /comfyui/custom_nodes/comfyui_face_parsing
+RUN pip install -r /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt
+
 # Install CNR (ComfyUI Registry) packages - matching working RunPod snapshot versions
-RUN comfy --workspace /comfyui node install comfyui_face_parsing@1.0.5 \
-    && comfy --workspace /comfyui node install ComfyUI_LayerStyle_Advance@2.0.37 \
+RUN comfy --workspace /comfyui node install ComfyUI_LayerStyle_Advance@2.0.37 \
     && comfy --workspace /comfyui node install comfyui_essentials@1.1.0 \
     && comfy --workspace /comfyui node install seedvr2_videoupscaler@2.5.24 \
     && comfy --workspace /comfyui node install comfyui-custom-scripts@1.2.5
