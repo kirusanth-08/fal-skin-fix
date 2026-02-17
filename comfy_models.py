@@ -5,8 +5,8 @@ MODEL_LIST = [
     # =======================================================
     {
         "url": "https://huggingface.co/alexShangeeth/LastFamedmd2/resolve/main/VXVI_LastFame_DMD2.safetensors",
-        "path": "/data/models/checkpoints/VXVI_LastFame_DMD2.safetensors",
-        "target": "/comfyui/models/checkpoints/VXVI_LastFame_DMD2.safetensors"
+        "path": "/data/models/checkpoints/epicrealismXL_vxviLastfameDMD2.safetensors",
+        "target": "/comfyui/models/checkpoints/epicrealismXL_vxviLastfameDMD2.safetensors"
     },
 
     # =======================================================
