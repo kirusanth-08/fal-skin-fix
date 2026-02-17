@@ -245,9 +245,9 @@ class SkinFixApp(
                 "name": image_name,
                 "image": image_b64
             }])
-            workflow["32"]["inputs"]["image"] = image_name
+            workflow["545"]["inputs"]["image"] = image_name
 
-            sampler = workflow["29"]["inputs"]
+            sampler = workflow["510"]["inputs"]
 
             # -------------------------------------------------
             # 2️⃣ Determine target resolution (NO DOWNSCALE)
@@ -259,8 +259,8 @@ class SkinFixApp(
                 sampler["denoise"] = p["denoise"]
 
                 if p.get("prompt_override"):
-                    workflow["26"]["inputs"]["part1"] = p["positive_prompt"]
-                    workflow["25"]["inputs"]["text"] = p["negative_prompt"]
+                    workflow["506"]["inputs"]["part1"] = p["positive_prompt"]
+                    workflow["507"]["inputs"]["text"] = p["negative_prompt"]
             else:
                 sampler["cfg"] = input.cfg
                 sampler["denoise"] = 0.30 + (input.skin_refinement / 100.0) * 0.10
@@ -270,13 +270,14 @@ class SkinFixApp(
             sampler["seed"] = input.seed
 
             # -------------------------------------------------
-            # 3️⃣ Apply resolution to BOTH nodes
+            # 3️⃣ Apply resolution to SeedVR2 nodes
             # -------------------------------------------------
-            workflow["30"]["inputs"]["new_resolution"] = target_resolution
-            workflow["31"]["inputs"]["vae_tile_size"] = target_resolution
+            workflow["548"]["inputs"]["resolution"] = target_resolution
+            workflow["549"]["inputs"]["encode_tile_size"] = min(1024, target_resolution)
+            workflow["549"]["inputs"]["decode_tile_size"] = min(1024, target_resolution)
 
             # Always randomize SeedVR2 internal seed
-            workflow["30"]["inputs"]["seed"] = random.randint(0, 2**32 - 1)
+            workflow["548"]["inputs"]["seed"] = random.randint(0, 2**32 - 1)
 
             # -------------------------------------------------
             # 4️⃣ Run ComfyUI
