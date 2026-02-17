@@ -186,29 +186,6 @@ class SkinFixApp(
     # 🔒 CRITICAL
     private_logs = True
 
-    FACE_PARSING_NODE_CANDIDATES = {
-        "FaceParsingModelLoader": [
-            "FaceParsingModelLoader",
-            "FaceParsingModelLoader(FaceParsing)",
-        ],
-        "FaceParsingProcessorLoader": [
-            "FaceParsingProcessorLoader",
-            "FaceParsingProcessorLoader(FaceParsing)",
-        ],
-        "FaceParsingResultsParser": [
-            "FaceParsingResultsParser",
-            "FaceParsingResultsParser(FaceParsing)",
-        ],
-        "FaceParse": ["FaceParse", "FaceParse(FaceParsing)"],
-    }
-
-    FACE_PARSING_WORKFLOW_NODE_IDS = {
-        "FaceParsingModelLoader": "6",
-        "FaceParsingProcessorLoader": "7",
-        "FaceParsingResultsParser": "14",
-        "FaceParse": "15",
-    }
-
     def setup(self):
         # Print GPU info
         try:
@@ -245,46 +222,11 @@ class SkinFixApp(
         if not check_server(f"http://{COMFY_HOST}/system_stats"):
             raise RuntimeError("ComfyUI failed to start")
 
-        self.available_node_types = set()
-        try:
-            object_info = requests.get(
-                f"http://{COMFY_HOST}/object_info", timeout=10
-            ).json()
-            self.available_node_types = set(object_info.keys())
-        except Exception as e:
-            print(f"⚠️ Could not fetch ComfyUI object_info: {e}")
-
-    def _configure_face_parsing_nodes(self, workflow):
-        selected_node_types = {}
-        for canonical_name, candidates in self.FACE_PARSING_NODE_CANDIDATES.items():
-            selected_node_types[canonical_name] = next(
-                (node_name for node_name in candidates if node_name in self.available_node_types),
-                None,
-            )
-
-        if all(selected_node_types.values()):
-            for canonical_name, selected_node_name in selected_node_types.items():
-                workflow_node_id = self.FACE_PARSING_WORKFLOW_NODE_IDS[canonical_name]
-                workflow[workflow_node_id]["class_type"] = selected_node_name
-            return
-
-        print(
-            "⚠️ Face parsing nodes unavailable. Falling back to person mask-only flow. "
-            f"Detected: {selected_node_types}"
-        )
-
-        # Fallback path: use the already-available person mask from node 28,
-        # then remove face parsing nodes from the graph to avoid missing node errors.
-        workflow["13"]["inputs"]["mask"] = ["28", 0]
-        for node_id in ["6", "7", "14", "15"]:
-            workflow.pop(node_id, None)
-
     @fal.endpoint("/")
     async def handler(self, input: SkinFixInput, response: Response) -> SkinFixOutput:
         try:
             job = copy.deepcopy(WORKFLOW_JSON)
             workflow = job["input"]["workflow"]
-            self._configure_face_parsing_nodes(workflow)
 
             # -------------------------------------------------
             # 1️⃣ Download and read input image resolution (KEY PART)
