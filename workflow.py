@@ -191,38 +191,9 @@ WORKFLOW_JSON={
           "title": "CLIP Text Encode (Prompt)"
         }
       },
-      "499": {
-        "inputs": {
-          "device": "cuda"
-        },
-        "class_type": "FaceParsingModelLoader(FaceParsing)",
-        "_meta": {
-          "title": "FaceParsingModelLoader(FaceParsing)"
-        }
-      },
-      "502": {
-        "inputs": {
-          "model": [
-            "499",
-            0
-          ],
-          "processor": [
-            "554",
-            0
-          ],
-          "image": [
-            "479",
-            0
-          ]
-        },
-        "class_type": "FaceParse(FaceParsing)",
-        "_meta": {
-          "title": "FaceParse(FaceParsing)"
-        }
-      },
       "504": {
         "inputs": {
-          "text_0": " human face<loc_386><loc_46><loc_609><loc_344>woman<loc_109><loc_0><loc_881><loc_998>  beautiful face, flawless smooth skin, clean natural skin texture, fine pores, subtle tone variation, soft complexion, radiant healthy skin, high detail skin texture, natural glow, photorealistic, masterpiece ",
+          "text_0": " human face<loc_386><loc_46><loc_609><loc_344>woman<loc_101><loc_0><loc_888><loc_998>  beautiful face, flawless smooth skin, clean natural skin texture, fine pores, subtle tone variation, soft complexion, radiant healthy skin, high detail skin texture, natural glow, photorealistic, masterpiece ",
           "text": [
             "506",
             0
@@ -530,13 +501,42 @@ WORKFLOW_JSON={
           "neck": False,
           "cloth": False,
           "result": [
-            "502",
+            "560",
             1
           ]
         },
         "class_type": "FaceParsingResultsParser(FaceParsing)",
         "_meta": {
           "title": "FaceParsingResultsParser(FaceParsing)"
+        }
+      },
+      "559": {
+        "inputs": {
+          "device": "cuda"
+        },
+        "class_type": "FaceParsingModelLoader(FaceParsing)",
+        "_meta": {
+          "title": "FaceParsingModelLoader(FaceParsing)"
+        }
+      },
+      "560": {
+        "inputs": {
+          "model": [
+            "559",
+            0
+          ],
+          "processor": [
+            "554",
+            0
+          ],
+          "image": [
+            "479",
+            0
+          ]
+        },
+        "class_type": "FaceParse(FaceParsing)",
+        "_meta": {
+          "title": "FaceParse(FaceParsing)"
         }
       }
     }
