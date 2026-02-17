@@ -206,25 +206,18 @@ class SkinFixApp(
             ensure_dir(model["target"])
             if not os.path.exists(model["target"]):
                 os.symlink(model["path"], model["target"])
-            
-        comfy_py = "/comfyui/.venv/bin/python"
-        if not os.path.exists(comfy_py):
-            comfy_py = "python"
-
-        print("Launching ComfyUI with:", comfy_py)
 
         # Start ComfyUI (NO --log-stdout)
         self.comfy = subprocess.Popen(
             [
-                comfy_py, "-u", "/comfyui/main.py",
+                "python", "-u", "/comfyui/main.py",
                 "--disable-auto-launch",
                 "--disable-metadata",
                 "--listen", "--port", "8188"
             ],
-            stdout=None,
-            stderr=None
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
         )
-
 
         if not check_server(f"http://{COMFY_HOST}/system_stats"):
             raise RuntimeError("ComfyUI failed to start")

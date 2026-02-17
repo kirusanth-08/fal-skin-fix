@@ -1,122 +1,105 @@
-FROM nvidia/cuda:12.8.0-runtime-ubuntu22.04
+FROM nvidia/cuda:12.8.0-runtime-ubuntu22.04 AS base
 
 ARG COMFYUI_VERSION=latest
-ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV PIP_PREFER_BINARY=1
+ARG ENABLE_PYTORCH_UPGRADE=false
+ARG PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cu128
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_PREFER_BINARY=1 \
+    CMAKE_BUILD_PARALLEL_LEVEL=8
 
 # ---------------------------------------------------------
-# System Packages
+# System & Python Setup
 # ---------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    git git-lfs wget curl \
-    ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
-    ca-certificates build-essential \
+    software-properties-common git git-lfs wget curl ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 ca-certificates \
     && git lfs install \
     && add-apt-repository ppa:deadsnakes/ppa \
     && apt-get update && apt-get install -y --no-install-recommends \
-    python3.12 python3.12-dev python3.12-venv python3-pip python3-distutils \
+    python3.12 python3.12-dev python3.12-venv python3-pip python3-distutils build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-RUN ln -sf /usr/bin/python3.12 /usr/bin/python3
-RUN python3.12 -m ensurepip --upgrade
-RUN python3.12 -m pip install --upgrade pip setuptools wheel
+RUN ln -sf /usr/bin/python3.12 /usr/bin/python3 && \
+    ln -sf /usr/bin/python3.12 /usr/bin/python
+
+RUN python3.12 -m ensurepip --upgrade && \
+    python3.12 -m pip install --upgrade pip setuptools wheel
 
 # ---------------------------------------------------------
-# Install ComfyUI via comfy-cli
+# PyTorch (CUDA 12.8)
+# ---------------------------------------------------------
+RUN pip install torch==2.7.0 -f https://download.pytorch.org/whl/cu128/torch_stable.html
+
+# ---------------------------------------------------------
+# ComfyUI Setup
 # ---------------------------------------------------------
 WORKDIR /opt
 RUN pip install comfy-cli
 RUN yes | comfy --workspace /comfyui install --version "${COMFYUI_VERSION}" --nvidia
 
-# ---------------------------------------------------------
-# 🔴 CRITICAL: Use ComfyUI venv for EVERYTHING
-# ---------------------------------------------------------
-ENV VIRTUAL_ENV=/comfyui/.venv
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
-RUN python -m pip install --upgrade pip setuptools wheel
+WORKDIR /comfyui
 
 # ---------------------------------------------------------
-# PyTorch (installed INSIDE ComfyUI venv)
+# Extra dependencies
 # ---------------------------------------------------------
-RUN pip install torch==2.7.0 \
-    -f https://download.pytorch.org/whl/cu128/torch_stable.html
+RUN pip install requests websocket-client sageattention \
+    accelerate transformers opencv-python insightface onnxruntime-gpu==1.18.0
 
-# ---------------------------------------------------------
-# Runtime Dependencies (all inside venv)
-# ---------------------------------------------------------
-RUN pip install \
-    requests \
-    websocket-client \
-    websockets \
-    accelerate \
-    transformers \
-    opencv-python \
-    insightface \
-    onnxruntime-gpu==1.18.0 \
-    sageattention
+# FIX: Add missing websocket packages for fal run
+RUN pip install websocket-client websockets
 
 # ---------------------------------------------------------
-# Custom Nodes
+# Skin v03 / ComfyUI Custom Nodes
 # ---------------------------------------------------------
 
-WORKDIR /comfyui/custom_nodes
+# 1. ComfyRoll Custom Nodes (NO requirements.txt)
+RUN git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git /comfyui/custom_nodes/ComfyUI_Comfyroll_CustomNodes \
+    && true
 
-# Face Parsing (required for EXCLUSION node)
-RUN git clone https://github.com/Ryuukeisyou/comfyui_face_parsing.git \
-    && pip install -r comfyui_face_parsing/requirements.txt
+# 2. ComfyUI Essentials (HAS requirements)
+RUN git clone https://github.com/cubiq/ComfyUI_essentials.git /comfyui/custom_nodes/ComfyUI_essentials \
+    && pip install -r /comfyui/custom_nodes/ComfyUI_essentials/requirements.txt
 
-# Florence2
-RUN git clone https://github.com/kijai/ComfyUI-Florence2.git \
-    && pip install -r ComfyUI-Florence2/requirements.txt
+# 3. comfyui_face_parsing (HAS requirements)
+RUN git clone https://github.com/Ryuukeisyou/comfyui_face_parsing.git /comfyui/custom_nodes/comfyui_face_parsing \
+    && pip install -r /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt
 
-# SeedVR2
-RUN comfy --workspace /comfyui node install seedvr2_videoupscaler
+# 4. ComfyUI LayerStyle Advance (HAS requirements)
+RUN git clone https://github.com/chflame163/ComfyUI_LayerStyle_Advance.git /comfyui/custom_nodes/ComfyUI_LayerStyle_Advance \
+    && pip install -r /comfyui/custom_nodes/ComfyUI_LayerStyle_Advance/requirements.txt
 
-# LayerStyle
-RUN comfy --workspace /comfyui node install ComfyUI_LayerStyle_Advance
+# 5. comfyui-custom-scripts (NO requirements)
+RUN git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git /comfyui/custom_nodes/ComfyUI-Custom-Scripts \
+    && true
 
-# Custom Scripts
-RUN comfy --workspace /comfyui node install comfyui-custom-scripts
+# 6. ComfyUI Florence2 (HAS requirements)
+RUN git clone https://github.com/kijai/ComfyUI-Florence2.git /comfyui/custom_nodes/ComfyUI-Florence2 \
+    && pip install -r /comfyui/custom_nodes/ComfyUI-Florence2/requirements.txt
 
-# ComfyRoll
-RUN git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git \
-    && pip install -r ComfyUI_Comfyroll_CustomNodes/requirements.txt || true
+# 7. ComfyUI KJNodes (HAS requirements)
+RUN git clone https://github.com/kijai/ComfyUI-KJNodes.git /comfyui/custom_nodes/ComfyUI-KJNodes \
+    && pip install -r /comfyui/custom_nodes/ComfyUI-KJNodes/requirements.txt
 
-# KJNodes
-RUN git clone https://github.com/kijai/ComfyUI-KJNodes.git \
-    && pip install -r ComfyUI-KJNodes/requirements.txt
+# 8. ComfyUI Post-Processing Nodes (NO requirements)
+RUN git clone https://github.com/EllangoK/ComfyUI-post-processing-nodes.git /comfyui/custom_nodes/ComfyUI-post-processing-nodes \
+    && true
 
-# Post Processing
-RUN git clone https://github.com/EllangoK/ComfyUI-post-processing-nodes.git || true
+# 9. Masquerade Nodes (NO requirements)
+RUN git clone https://github.com/BadCafeCode/masquerade-nodes-comfyui.git /comfyui/custom_nodes/masquerade-nodes-comfyui \
+    && true
 
-# Masquerade
-RUN git clone https://github.com/BadCafeCode/masquerade-nodes-comfyui.git || true
+# 10. rgthree – Power Lora Loader (HAS requirements)
+RUN git clone https://github.com/rgthree/rgthree-comfy.git /comfyui/custom_nodes/rgthree-comfy \
+    && pip install -r /comfyui/custom_nodes/rgthree-comfy/requirements.txt
 
-# rgthree
-RUN git clone https://github.com/rgthree/rgthree-comfy.git \
-    && pip install -r rgthree-comfy/requirements.txt
-
-# ---------------------------------------------------------
-# Verify face parsing actually imports (fail fast)
-# ---------------------------------------------------------
-RUN python - <<'PY'
-import sys
-print("Python:", sys.executable)
-import importlib
-try:
-    importlib.import_module("custom_nodes.comfyui_face_parsing")
-    print("FaceParsing module import OK")
-except Exception as e:
-    print("FaceParsing import failed:", e)
-    raise
-PY
+# 11. SeedVR2 Upscaler – alex-node-final (HAS requirements)
+RUN git clone https://github.com/shangeethAlex/alex-node-final.git /comfyui/custom_nodes/ComfyUI-SeedVR2 \
+    && pip install -r /comfyui/custom_nodes/ComfyUI-SeedVR2/requirements.txt
 
 # ---------------------------------------------------------
-# fal runtime deps
+# fal Runtime Requirements
 # ---------------------------------------------------------
 RUN pip install --no-cache-dir \
     boto3==1.35.74 \
