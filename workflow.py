@@ -189,7 +189,7 @@ WORKFLOW_JSON={
             1
           ]
         },
-        "class_type": "FaceParsingResultsParserV2",
+        "class_type": "FaceParsingResultsParser(FaceParsing)",
       },
       "494": {
         "inputs": {

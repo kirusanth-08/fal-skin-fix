@@ -64,7 +64,8 @@ RUN git clone https://github.com/cubiq/ComfyUI_essentials.git /comfyui/custom_no
 
 # 3. comfyui_face_parsing (HAS requirements)
 RUN git clone https://github.com/Ryuukeisyou/comfyui_face_parsing.git /comfyui/custom_nodes/comfyui_face_parsing \
-    && pip install -r /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt
+    && cd /comfyui/custom_nodes/comfyui_face_parsing \
+    && pip install -r requirements.txt
 
 # 4. ComfyUI LayerStyle Advance (HAS requirements)
 RUN git clone https://github.com/chflame163/ComfyUI_LayerStyle_Advance.git /comfyui/custom_nodes/ComfyUI_LayerStyle_Advance \
