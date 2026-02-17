@@ -54,49 +54,50 @@ RUN pip install websocket-client websockets
 # Skin v03 / ComfyUI Custom Nodes
 # ---------------------------------------------------------
 
-# 1. ComfyRoll Custom Nodes (NO requirements.txt)
+# 1. ComfyRoll Custom Nodes (from git with specific hash)
 RUN git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git /comfyui/custom_nodes/ComfyUI_Comfyroll_CustomNodes \
-    && true
+    && cd /comfyui/custom_nodes/ComfyUI_Comfyroll_CustomNodes \
+    && git checkout d78b780ae43fcf8c6b7c6505e6ffb4584281ceca
 
-# 2. ComfyUI Essentials (HAS requirements)
-RUN git clone https://github.com/cubiq/ComfyUI_essentials.git /comfyui/custom_nodes/ComfyUI_essentials \
-    && pip install -r /comfyui/custom_nodes/ComfyUI_essentials/requirements.txt
+# 2. ComfyUI Essentials v1.1.0 (from registry)
+RUN comfy --workspace /comfyui node install comfyui_essentials
 
-# 3. comfyui_face_parsing (HAS requirements)
-RUN git clone https://github.com/Ryuukeisyou/comfyui_face_parsing.git /comfyui/custom_nodes/comfyui_face_parsing \
-    && pip install -r /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt
+# 3. comfyui_face_parsing v1.0.5 (from registry - CRITICAL for class names)
+RUN comfy --workspace /comfyui node install comfyui_face_parsing
 
-# 4. ComfyUI LayerStyle Advance (HAS requirements)
-RUN git clone https://github.com/chflame163/ComfyUI_LayerStyle_Advance.git /comfyui/custom_nodes/ComfyUI_LayerStyle_Advance \
-    && pip install -r /comfyui/custom_nodes/ComfyUI_LayerStyle_Advance/requirements.txt
+# 4. ComfyUI LayerStyle Advance v2.0.37 (from registry)
+RUN comfy --workspace /comfyui node install ComfyUI_LayerStyle_Advance
 
-# 5. comfyui-custom-scripts (NO requirements)
-RUN git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git /comfyui/custom_nodes/ComfyUI-Custom-Scripts \
-    && true
+# 5. comfyui-custom-scripts v1.2.5 (from registry)
+RUN comfy --workspace /comfyui node install comfyui-custom-scripts
 
-# 6. ComfyUI Florence2 (HAS requirements)
+# 6. SeedVR2 Video Upscaler v2.5.24 (from registry)
+RUN comfy --workspace /comfyui node install seedvr2_videoupscaler
+
+# 6. ComfyUI Florence2 (from git - not in snapshot registry)
 RUN git clone https://github.com/kijai/ComfyUI-Florence2.git /comfyui/custom_nodes/ComfyUI-Florence2 \
     && pip install -r /comfyui/custom_nodes/ComfyUI-Florence2/requirements.txt
 
-# 7. ComfyUI KJNodes (HAS requirements)
+# 7. ComfyUI KJNodes (from git with specific hash)
 RUN git clone https://github.com/kijai/ComfyUI-KJNodes.git /comfyui/custom_nodes/ComfyUI-KJNodes \
-    && pip install -r /comfyui/custom_nodes/ComfyUI-KJNodes/requirements.txt
+    && cd /comfyui/custom_nodes/ComfyUI-KJNodes \
+    && git checkout 50a0837f9aea602b184bbf6dbabf66ed2c7a1d22 \
+    && pip install -r requirements.txt
 
-# 8. ComfyUI Post-Processing Nodes (NO requirements)
+# 8. ComfyUI Post-Processing Nodes (from git - not in snapshot)
 RUN git clone https://github.com/EllangoK/ComfyUI-post-processing-nodes.git /comfyui/custom_nodes/ComfyUI-post-processing-nodes \
     && true
 
-# 9. Masquerade Nodes (NO requirements)
+# 9. Masquerade Nodes (from git with specific hash)
 RUN git clone https://github.com/BadCafeCode/masquerade-nodes-comfyui.git /comfyui/custom_nodes/masquerade-nodes-comfyui \
-    && true
+    && cd /comfyui/custom_nodes/masquerade-nodes-comfyui \
+    && git checkout 432cb4d146a391b387a0cd25ace824328b5b61cf
 
-# 10. rgthree – Power Lora Loader (HAS requirements)
+# 10. rgthree – Power Lora Loader (from git with specific hash)
 RUN git clone https://github.com/rgthree/rgthree-comfy.git /comfyui/custom_nodes/rgthree-comfy \
-    && pip install -r /comfyui/custom_nodes/rgthree-comfy/requirements.txt
-
-# 11. SeedVR2 Upscaler – alex-node-final (HAS requirements)
-RUN git clone https://github.com/shangeethAlex/alex-node-final.git /comfyui/custom_nodes/ComfyUI-SeedVR2 \
-    && pip install -r /comfyui/custom_nodes/ComfyUI-SeedVR2/requirements.txt
+    && cd /comfyui/custom_nodes/rgthree-comfy \
+    && git checkout 8ff50e4521881eca1fe26aec9615fc9362474931 \
+    && pip install -r requirements.txt
 
 # ---------------------------------------------------------
 # fal Runtime Requirements
