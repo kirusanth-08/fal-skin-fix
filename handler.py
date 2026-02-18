@@ -63,15 +63,6 @@ PRESETS = {
     "full_body": {"cfg": 1.5, "denoise": 0.30, "resolution": 2048},
 }
 
-def disabled_when_preset_selected() -> dict:
-    return {
-        "x-fal-display": {
-            "disabled": {
-                "skin_preset": {"$ne": "none"}
-            }
-        }
-    }
-
 # -------------------------------------------------
 # Utilities
 # -------------------------------------------------
@@ -152,8 +143,7 @@ class SkinFixInput(BaseModel):
         ge=0.0,
         le=2.0,
         title="Skin Realism",
-        description="Adjust skin realism (only active when 'none' preset is selected)",
-        json_schema_extra=disabled_when_preset_selected()
+        description="Only applies when Skin Preset is set to 'none'"
     )
 
     skin_refinement: int = Field(
@@ -161,8 +151,7 @@ class SkinFixInput(BaseModel):
         ge=0,
         le=100,
         title="Skin Refinement",
-        description="Adjust skin refinement level (only active when 'none' preset is selected)",
-        json_schema_extra=disabled_when_preset_selected()
+        description="Only applies when Skin Preset is set to 'none'"
     )
 
     seed: int = Field(default=123456789, title="Random Seed")
@@ -173,8 +162,7 @@ class SkinFixInput(BaseModel):
     ] = Field(
         default=2048,
         title="Upscaler Resolution",
-        description="Set upscale resolution (only active when 'none' preset is selected)",
-        json_schema_extra=disabled_when_preset_selected()
+        description="Only applies when Skin Preset is set to 'none'"
     )
 
 # -------------------------------------------------
