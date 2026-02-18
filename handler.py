@@ -65,8 +65,11 @@ PRESETS = {
 
 def visible_when_preset_none() -> dict:
     return {
-        "visible_when": {"skin_preset": "none"},
-        "ui:visible_when": {"skin_preset": "none"},
+        "x-fal-display": {
+            "hidden_when": {
+                "skin_preset": {"$ne": "none"}
+            }
+        }
     }
 
 # -------------------------------------------------
