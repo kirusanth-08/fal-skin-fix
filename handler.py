@@ -31,6 +31,11 @@ dockerfile_path = f"{PWD}/Dockerfile"
 custom_image = ContainerImage.from_dockerfile(dockerfile_path)
 
 COMFY_HOST = "127.0.0.1:8188"
+DEBUG_LOGS = os.environ.get("FAL_DEBUG") == "1"
+
+def debug_log(message: str) -> None:
+    if DEBUG_LOGS:
+        print(message)
 
 # -------------------------------------------------
 # Presets
@@ -57,6 +62,12 @@ PRESETS = {
     "mid_range": {"cfg": 1.4, "denoise": 0.40, "resolution": 2048},
     "full_body": {"cfg": 1.5, "denoise": 0.30, "resolution": 2048},
 }
+
+def visible_when_preset_none() -> dict:
+    return {
+        "visible_when": {"skin_preset": "none"},
+        "ui:visible_when": {"skin_preset": "none"},
+    }
 
 # -------------------------------------------------
 # Utilities
@@ -138,7 +149,7 @@ class SkinFixInput(BaseModel):
         ge=0.0,
         le=2.0,
         title="Skin Realism",
-        json_schema_extra={"visible_when": {"skin_preset": "none"}}
+        json_schema_extra=visible_when_preset_none()
     )
 
     skin_refinement: int = Field(
@@ -146,7 +157,7 @@ class SkinFixInput(BaseModel):
         ge=0,
         le=100,
         title="Skin Refinement",
-        json_schema_extra={"visible_when": {"skin_preset": "none"}}
+        json_schema_extra=visible_when_preset_none()
     )
 
     seed: int = Field(default=123456789, title="Random Seed")
@@ -157,7 +168,7 @@ class SkinFixInput(BaseModel):
     ] = Field(
         default=2048,
         title="Upscaler Resolution",
-        json_schema_extra={"visible_when": {"skin_preset": "none"}}
+        json_schema_extra=visible_when_preset_none()
     )
 
 # -------------------------------------------------
@@ -185,7 +196,7 @@ class SkinFixApp(
     requirements = ["websockets", "websocket-client"]
 
     # 🔒 CRITICAL
-    private_logs = False  # Set to True if logs may contain sensitive info (e.g. image URLs)
+    private_logs = True  # Set to True if logs may contain sensitive info (e.g. image URLs)
 
     def setup(self):
         # Print GPU info
@@ -194,9 +205,9 @@ class SkinFixApp(
                 ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
                 text=True
             ).strip()
-            print(f"🖥️ GPU Type: {gpu_info}")
+            debug_log(f"🖥️ GPU Type: {gpu_info}")
         except Exception as e:
-            print(f"⚠️ Could not detect GPU: {e}")
+            debug_log(f"⚠️ Could not detect GPU: {e}")
 
         # Download models
         for model in MODEL_LIST:
@@ -211,16 +222,16 @@ class SkinFixApp(
         # Preflight: verify face_parsing node is present and importable
         try:
             node_dir = "/comfyui/custom_nodes/comfyui_face_parsing"
-            print(f"🧩 face_parsing node dir exists: {os.path.isdir(node_dir)}")
+            debug_log(f"🧩 face_parsing node dir exists: {os.path.isdir(node_dir)}")
             if "/comfyui" not in sys.path:
                 sys.path.insert(0, "/comfyui")
             import importlib
             fp_module = importlib.import_module("custom_nodes.comfyui_face_parsing")
             node_map = getattr(fp_module, "NODE_CLASS_MAPPINGS", {})
             has_parser = "FaceParsingResultsParser(FaceParsing)" in node_map
-            print(f"🧩 face_parsing node registered: {has_parser}")
+            debug_log(f"🧩 face_parsing node registered: {has_parser}")
         except Exception as e:
-            print(f"❌ face_parsing import failed: {e}")
+            debug_log(f"❌ face_parsing import failed: {e}")
 
         # Start ComfyUI (NO --log-stdout)
         self.comfy = subprocess.Popen(
@@ -244,7 +255,7 @@ class SkinFixApp(
             nodes = info.json()
             if "FaceParsingResultsParser(FaceParsing)" not in nodes:
                 raise RuntimeError("FaceParsingResultsParser(FaceParsing) not in object_info")
-            print("✅ ComfyUI reports FaceParsingResultsParser(FaceParsing) is available")
+            debug_log("✅ ComfyUI reports FaceParsingResultsParser(FaceParsing) is available")
         except Exception as e:
             raise RuntimeError(f"ComfyUI missing face_parsing node: {e}")
 
@@ -299,6 +310,7 @@ class SkinFixApp(
             # 3️⃣ Apply resolution to SeedVR2 nodes
             # -------------------------------------------------
             workflow["548"]["inputs"]["resolution"] = target_resolution
+            workflow["548"]["inputs"]["max_resolution"] = 4096
             workflow["549"]["inputs"]["encode_tile_size"] = min(1024, target_resolution)
             workflow["549"]["inputs"]["decode_tile_size"] = min(1024, target_resolution)
 
@@ -321,7 +333,7 @@ class SkinFixApp(
             # Log detailed error if request fails
             if resp.status_code != 200:
                 error_detail = resp.text
-                print(f"ComfyUI Error Response: {error_detail}")
+                debug_log(f"ComfyUI Error Response: {error_detail}")
                 raise HTTPException(status_code=500, detail=f"ComfyUI rejected workflow: {error_detail}")
             
             prompt_id = resp.json()["prompt_id"]
