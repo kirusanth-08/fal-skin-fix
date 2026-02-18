@@ -126,7 +126,7 @@ def upload_images(images):
         r.raise_for_status()
 
 # -------------------------------------------------
-# Input Model
+# Input Model (conditional UI already applied)
 # -------------------------------------------------
 class SkinFixInput(BaseModel):
     image_url: str = Field(
@@ -135,50 +135,41 @@ class SkinFixInput(BaseModel):
         description="URL of the image to enhance and upscale."
     )
 
-    mode: Literal["preset", "custom"] = Field(
-        default="preset",
-        title="Configuration Mode",
-        description="Choose 'preset' to use predefined settings or 'custom' for manual control"
-    )
-
-    preset_name: Optional[Literal[
+    skin_preset: Literal[
+        "none",
         "imperfect_skin",
         "high_end_skin",
         "smooth_skin",
         "portrait",
         "mid_range",
         "full_body"
-    ]] = Field(
-        default="high_end_skin",
-        title="Preset",
-        description="Select a preset (only active when mode is 'preset')"
-    )
+    ] = Field(title="Skin Preset", description="Select a preset or choose 'none' to use custom settings")
 
-    cfg: float = Field(
+    cfg: Optional[float] = Field(
         default=1.0,
         ge=0.0,
         le=2.0,
-        title="Skin Realism",
-        description="Adjust skin realism (only active when mode is 'custom')"
+        title="Skin Realism (Custom)",
+        description="Only used when preset is 'none'"
     )
 
-    skin_refinement: int = Field(
+    skin_refinement: Optional[int] = Field(
         default=30,
         ge=0,
         le=100,
-        title="Skin Refinement",
-        description="Adjust skin refinement level (only active when mode is 'custom')"
+        title="Skin Refinement (Custom)",
+        description="Only used when preset is 'none'"
     )
 
     seed: int = Field(default=123456789, title="Random Seed")
 
-    upscale_resolution: Literal[
+    upscale_resolution: Optional[Literal[
         1024, 1280, 1536, 1792,
         2048, 2304, 2560, 2816, 3072
-    ] = Field(
+    ]] = Field(
         default=2048,
-        title="Upscaler Resolution",
-        description="Target resolution for upscaling (only active when mode is 'custom')"
+        title="Upscaler Resolution (Custom)",
+        description="Only used when preset is 'none'"
     )
 
 # -------------------------------------------------
@@ -297,11 +288,10 @@ class SkinFixApp(
             sampler = workflow["510"]["inputs"]
 
             # -------------------------------------------------
-            # 2️⃣ Apply settings based on mode
+            # 2️⃣ Determine target resolution (NO DOWNSCALE)
             # -------------------------------------------------
-            if input.mode == "preset":
-                # Use preset settings
-                p = PRESETS[input.preset_name]
+            if input.skin_preset != "none":
+                p = PRESETS[input.skin_preset]
                 target_resolution = max(p["resolution"], input_image_resolution)
                 sampler["cfg"] = p["cfg"]
                 sampler["denoise"] = p["denoise"]
@@ -310,10 +300,9 @@ class SkinFixApp(
                     workflow["506"]["inputs"]["part1"] = p["positive_prompt"]
                     workflow["507"]["inputs"]["text"] = p["negative_prompt"]
             else:
-                # Use custom settings
-                sampler["cfg"] = input.cfg
-                sampler["denoise"] = 0.30 + (input.skin_refinement / 100.0) * 0.10
-                target_resolution = max(input.upscale_resolution, input_image_resolution)
+                sampler["cfg"] = input.cfg or 1.0
+                sampler["denoise"] = 0.30 + ((input.skin_refinement or 30) / 100.0) * 0.10
+                target_resolution = max(input.upscale_resolution or 2048, input_image_resolution)
 
             # Apply seed
             sampler["seed"] = input.seed
