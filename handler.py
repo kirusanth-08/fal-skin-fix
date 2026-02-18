@@ -15,6 +15,7 @@ import random
 import tempfile
 import time
 import subprocess
+import sys
 from io import BytesIO
 from PIL import Image as PILImage
 from pydantic import BaseModel, Field
@@ -207,6 +208,20 @@ class SkinFixApp(
             if not os.path.exists(model["target"]):
                 os.symlink(model["path"], model["target"])
 
+        # Preflight: verify face_parsing node is present and importable
+        try:
+            node_dir = "/comfyui/custom_nodes/comfyui_face_parsing"
+            print(f"🧩 face_parsing node dir exists: {os.path.isdir(node_dir)}")
+            if "/comfyui" not in sys.path:
+                sys.path.insert(0, "/comfyui")
+            import importlib
+            fp_module = importlib.import_module("custom_nodes.comfyui_face_parsing")
+            node_map = getattr(fp_module, "NODE_CLASS_MAPPINGS", {})
+            has_parser = "FaceParsingResultsParser(FaceParsing)" in node_map
+            print(f"🧩 face_parsing node registered: {has_parser}")
+        except Exception as e:
+            print(f"❌ face_parsing import failed: {e}")
+
         # Start ComfyUI (NO --log-stdout)
         self.comfy = subprocess.Popen(
             [
@@ -221,6 +236,17 @@ class SkinFixApp(
 
         if not check_server(f"http://{COMFY_HOST}/system_stats"):
             raise RuntimeError("ComfyUI failed to start")
+
+        # Verify ComfyUI registered the face_parsing node
+        try:
+            info = requests.get(f"http://{COMFY_HOST}/object_info", timeout=10)
+            info.raise_for_status()
+            nodes = info.json()
+            if "FaceParsingResultsParser(FaceParsing)" not in nodes:
+                raise RuntimeError("FaceParsingResultsParser(FaceParsing) not in object_info")
+            print("✅ ComfyUI reports FaceParsingResultsParser(FaceParsing) is available")
+        except Exception as e:
+            raise RuntimeError(f"ComfyUI missing face_parsing node: {e}")
 
     @fal.endpoint("/")
     async def handler(self, input: SkinFixInput, response: Response) -> SkinFixOutput:
