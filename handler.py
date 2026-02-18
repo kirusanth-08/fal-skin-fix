@@ -16,12 +16,19 @@ import tempfile
 import time
 import subprocess
 import sys
+import logging
+import warnings
 from io import BytesIO
 from PIL import Image as PILImage
-from pydantic import BaseModel, Field
-from typing import Literal
+from pydantic import BaseModel, Field, field_validator
+from typing import Literal, Optional
 from comfy_models import MODEL_LIST
 from workflow import WORKFLOW_JSON
+
+# Suppress urllib and fal toolkit warnings
+logging.getLogger("urllib3").setLevel(logging.ERROR)
+logging.getLogger("fal.toolkit").setLevel(logging.ERROR)
+warnings.filterwarnings("ignore", category=UserWarning, module="fal.toolkit")
 
 # -------------------------------------------------
 # Container setup
@@ -136,33 +143,33 @@ class SkinFixInput(BaseModel):
         "portrait",
         "mid_range",
         "full_body"
-    ] = Field(title="Skin Preset")
+    ] = Field(title="Skin Preset", description="Select a preset or choose 'none' to use custom settings")
 
-    cfg: float = Field(
+    cfg: Optional[float] = Field(
         default=1.0,
         ge=0.0,
         le=2.0,
-        title="Skin Realism",
-        description="Only applies when Skin Preset is set to 'none'"
+        title="Skin Realism (Custom)",
+        description="Only used when preset is 'none'"
     )
 
-    skin_refinement: int = Field(
+    skin_refinement: Optional[int] = Field(
         default=30,
         ge=0,
         le=100,
-        title="Skin Refinement",
-        description="Only applies when Skin Preset is set to 'none'"
+        title="Skin Refinement (Custom)",
+        description="Only used when preset is 'none'"
     )
 
     seed: int = Field(default=123456789, title="Random Seed")
 
-    upscale_resolution: Literal[
+    upscale_resolution: Optional[Literal[
         1024, 1280, 1536, 1792,
         2048, 2304, 2560, 2816, 3072
-    ] = Field(
+    ]] = Field(
         default=2048,
-        title="Upscaler Resolution",
-        description="Only applies when Skin Preset is set to 'none'"
+        title="Upscaler Resolution (Custom)",
+        description="Only used when preset is 'none'"
     )
 
 # -------------------------------------------------
@@ -293,9 +300,9 @@ class SkinFixApp(
                     workflow["506"]["inputs"]["part1"] = p["positive_prompt"]
                     workflow["507"]["inputs"]["text"] = p["negative_prompt"]
             else:
-                sampler["cfg"] = input.cfg
-                sampler["denoise"] = 0.30 + (input.skin_refinement / 100.0) * 0.10
-                target_resolution = max(input.upscale_resolution, input_image_resolution)
+                sampler["cfg"] = input.cfg or 1.0
+                sampler["denoise"] = 0.30 + ((input.skin_refinement or 30) / 100.0) * 0.10
+                target_resolution = max(input.upscale_resolution or 2048, input_image_resolution)
 
             # Apply seed
             sampler["seed"] = input.seed
