@@ -410,7 +410,7 @@ WORKFLOW_JSON={
         "inputs": {
           "seed": 2439781946,
           "resolution": 2048,
-          "max_resolution": 2048,
+          "max_resolution": 4096,
           "batch_size": 1,
           "uniform_batch_size": False,
           "color_correction": "lab",
