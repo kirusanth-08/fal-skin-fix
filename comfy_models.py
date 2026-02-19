@@ -18,11 +18,6 @@ MODEL_LIST = [
         "target": "/comfyui/models/SEEDVR2/seedvr2_ema_7b_fp16.safetensors"
     },
     {
-        "url": "https://huggingface.co/numz/SeedVR2_comfyUI/resolve/main/seedvr2_ema_3b_fp8_e4m3fn.safetensors",
-        "path": "/data/models/SEEDVR2/seedvr2_ema_3b_fp8_e4m3fn.safetensors",
-        "target": "/comfyui/models/SEEDVR2/seedvr2_ema_3b_fp8_e4m3fn.safetensors"
-    },
-    {
         "url": "https://huggingface.co/numz/SeedVR2_comfyUI/resolve/main/ema_vae_fp16.safetensors",
         "path": "/data/models/SEEDVR2/ema_vae_fp16.safetensors",
         "target": "/comfyui/models/SEEDVR2/ema_vae_fp16.safetensors"
@@ -48,16 +43,7 @@ MODEL_LIST = [
     },
 
     # =======================================================
-    # 4. INSIGHTFACE - INSWAPPER
-    # =======================================================
-    {
-        "url": "https://huggingface.co/ezioruan/inswapper_128.onnx/resolve/main/inswapper_128.onnx",
-        "path": "/data/models/insightface/inswapper_128.onnx",
-        "target": "/comfyui/models/insightface/inswapper_128.onnx"
-    },
-
-    # =======================================================
-    # 5. VITMATTE BACKGROUND MATTING
+    # 4. VITMATTE BACKGROUND MATTING
     # =======================================================
     {
         "url": "https://huggingface.co/shiertier/vitmatte/resolve/main/model.safetensors",
@@ -81,7 +67,7 @@ MODEL_LIST = [
     },
 
     # =======================================================
-    # 6. FLORENCE-2 BASE (FULL VISION + LLM SET)
+    # 5. FLORENCE-2 BASE (FULL VISION + LLM SET)
     # =======================================================
     {
         "url": "https://huggingface.co/microsoft/Florence-2-base/resolve/main/model.safetensors",
@@ -135,16 +121,7 @@ MODEL_LIST = [
     },
 
     # =======================================================
-    # 7. MEDIAPIPE SELFIE SEGMENTATION
-    # =======================================================
-    {
-        "url": "https://huggingface.co/yolain/selfie_multiclass_256x256/resolve/main/selfie_multiclass_256x256.tflite",
-        "path": "/data/models/mediapipe/selfie_multiclass_256x256.tflite",
-        "target": "/comfyui/models/mediapipe/selfie_multiclass_256x256.tflite"
-    },
-
-    # =======================================================
-    # 8. YOLOv8 FACE DETECTION (ULTRALYTICS - BBOX)
+    # 6. YOLOv8 FACE DETECTION (ULTRALYTICS - BBOX)
     # =======================================================
     {
         "url": "https://huggingface.co/xingren23/comfyflow-models/resolve/976de8449674de379b02c144d0b3cfa2b61482f2/ultralytics/bbox/face_yolov8m.pt",

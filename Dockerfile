@@ -44,11 +44,8 @@ WORKDIR /comfyui
 # ---------------------------------------------------------
 # Extra dependencies
 # ---------------------------------------------------------
-RUN pip install requests websocket-client sageattention \
+RUN pip install --no-cache-dir requests websocket-client websockets sageattention \
     accelerate transformers insightface onnxruntime-gpu==1.18.0
-
-# FIX: Add missing websocket packages for fal run
-RUN pip install websocket-client websockets
 
 # ---------------------------------------------------------
 # Skin v03 / ComfyUI Custom Nodes

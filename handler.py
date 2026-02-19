@@ -39,6 +39,8 @@ custom_image = ContainerImage.from_dockerfile(dockerfile_path)
 
 COMFY_HOST = "127.0.0.1:8188"
 DEBUG_LOGS = os.environ.get("FAL_DEBUG") == "1"
+SKIP_MODEL_DOWNLOADS = os.environ.get("SKIP_MODEL_DOWNLOADS") == "1"
+ENABLE_WARMUP = os.environ.get("ENABLE_WARMUP") == "1"
 
 def debug_log(message: str) -> None:
     if DEBUG_LOGS:
@@ -75,6 +77,30 @@ PRESETS = {
 # -------------------------------------------------
 def ensure_dir(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
+
+def resolve_model_source(model):
+    local_path = model.get("path")
+    if local_path and os.path.exists(local_path):
+        return local_path
+
+    if SKIP_MODEL_DOWNLOADS:
+        raise RuntimeError(f"Model missing and downloads disabled: {model['target']}")
+
+    debug_log(f"⬇️ Downloading: {model['url']}")
+    return download_model_weights(model["url"])
+
+def ensure_model_link(model):
+    target_path = model["target"]
+    if os.path.exists(target_path):
+        return
+
+    if os.path.islink(target_path):
+        os.unlink(target_path)
+
+    cached_path = resolve_model_source(model)
+    ensure_dir(target_path)
+    os.symlink(cached_path, target_path)
+    debug_log(f"✅ Linked: {cached_path} -> {target_path}")
 
 def check_server(url, retries=500, delay=0.1):
     for _ in range(retries):
@@ -202,26 +228,13 @@ class SkinFixApp(
         except Exception as e:
             debug_log(f"⚠️ Could not detect GPU: {e}")
 
-        # Download models using fal.toolkit (Caching!)
+        # Ensure models are available and linked (skip downloads if already baked)
         for model in MODEL_LIST:
             try:
-                debug_log(f"⬇️ Downloading: {model['url']}")
-                # This uses fal's internal cache
-                cached_path = download_model_weights(model["url"])
-                
-                # Symlink to ComfyUI models dir
-                target_path = model["target"]
-                ensure_dir(target_path)
-                
-                if os.path.exists(target_path) or os.path.islink(target_path):
-                    os.unlink(target_path)  # Remove existing to be safe
-                    
-                os.symlink(cached_path, target_path)
-                debug_log(f"✅ Linked: {cached_path} -> {target_path}")
-                
+                ensure_model_link(model)
             except Exception as e:
-                debug_log(f"❌ Failed to download/link {model['url']}: {e}")
-                raise e
+                debug_log(f"❌ Failed to prepare model {model['url']}: {e}")
+                raise
 
         # Preflight: verify face_parsing node is present and importable
         try:
@@ -266,7 +279,8 @@ class SkinFixApp(
         # -------------------------------------------------
         # Warmup
         # -------------------------------------------------
-        self._run_warmup()
+        if ENABLE_WARMUP:
+            self._run_warmup()
 
     def _run_warmup(self):
         """Run a lightweight generation to load models into GPU memory."""
