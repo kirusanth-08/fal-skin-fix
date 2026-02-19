@@ -81,26 +81,32 @@ def ensure_dir(path):
 def resolve_model_source(model):
     local_path = model.get("path")
     if local_path and os.path.exists(local_path):
-        return local_path
+        debug_log(f"📦 Using local model path: {local_path}")
+        return local_path, "local"
 
     if SKIP_MODEL_DOWNLOADS:
         raise RuntimeError(f"Model missing and downloads disabled: {model['target']}")
 
     debug_log(f"⬇️ Downloading: {model['url']}")
-    return download_model_weights(model["url"])
+    return download_model_weights(model["url"]), "download"
 
 def ensure_model_link(model):
     target_path = model["target"]
     if os.path.exists(target_path):
+        if os.path.islink(target_path):
+            debug_log(f"🔗 Using linked model: {target_path} -> {os.readlink(target_path)}")
+        else:
+            debug_log(f"✅ Using existing model file: {target_path}")
         return
 
     if os.path.islink(target_path):
+        debug_log(f"🧹 Removing broken symlink: {target_path}")
         os.unlink(target_path)
 
-    cached_path = resolve_model_source(model)
+    cached_path, source = resolve_model_source(model)
     ensure_dir(target_path)
     os.symlink(cached_path, target_path)
-    debug_log(f"✅ Linked: {cached_path} -> {target_path}")
+    debug_log(f"✅ Linked ({source}): {cached_path} -> {target_path}")
 
 def check_server(url, retries=500, delay=0.1):
     for _ in range(retries):
@@ -215,7 +221,7 @@ class SkinFixApp(
     requirements = ["websockets", "websocket-client"]
 
     # 🔒 CRITICAL
-    private_logs = True  # Set to True if logs may contain sensitive info (e.g. image URLs)
+    private_logs = False  # Set to True if logs may contain sensitive info (e.g. image URLs)
 
     def setup(self):
         # Print GPU info
