@@ -3,9 +3,3 @@ requests==2.32.5
 websocket-client==1.9.0
 websockets==15.0.1
 pillow==11.3.0
-((.venv) ) izuulkh@Isurus-MacBook-Pro fal-skin-fix % fal deploy
-
-✘ argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneTy
-((.venv) ) izuulkh@Isurus-MacBook-Pro fal-skin-fix % fal deploy
-
-✘ argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneTy
