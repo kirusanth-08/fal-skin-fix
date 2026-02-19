@@ -1,6 +1,6 @@
 import fal
 from fal.container import ContainerImage
-from fal.toolkit import Image
+from fal.toolkit import Image, download_model_weights
 from fastapi import Response, HTTPException
 from pathlib import Path
 import json
@@ -33,7 +33,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="fal.toolkit")
 # -------------------------------------------------
 # Container setup
 # -------------------------------------------------
-PWD = Path(__file__).resolve().parent
+PWD = Path(__file__).resolve().parent if __file__ else Path(os.getcwd())
 dockerfile_path = f"{PWD}/Dockerfile"
 custom_image = ContainerImage.from_dockerfile(dockerfile_path)
 
@@ -75,23 +75,6 @@ PRESETS = {
 # -------------------------------------------------
 def ensure_dir(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-
-def download_if_missing(url, path):
-    if os.path.exists(path):
-        return
-    ensure_dir(path)
-    
-    # Add Hugging Face authentication if HF_TOKEN_k is available
-    headers = {}
-    hf_token = os.environ.get("HF_TOKEN_k") or os.environ.get("HUGGING_FACE_HUB_TOKEN")
-    if hf_token and "huggingface.co" in url:
-        headers["Authorization"] = f"Bearer {hf_token}"
-    
-    with requests.get(url, stream=True, headers=headers) as r:
-        r.raise_for_status()
-        with open(path, "wb") as f:
-            for chunk in r.iter_content(8192):
-                f.write(chunk)
 
 def check_server(url, retries=500, delay=0.1):
     for _ in range(retries):
@@ -197,7 +180,7 @@ class SkinFixApp(
     keep_alive=100,
     min_concurrency=0,
     max_concurrency=5,
-    name="skin-fix",
+    name="skin-update",
 ):
     """Skin Fix - Advanced skin refinement and upscaling."""
     
@@ -219,15 +202,26 @@ class SkinFixApp(
         except Exception as e:
             debug_log(f"⚠️ Could not detect GPU: {e}")
 
-        # Download models
+        # Download models using fal.toolkit (Caching!)
         for model in MODEL_LIST:
-            download_if_missing(model["url"], model["path"])
-
-        # Symlink models
-        for model in MODEL_LIST:
-            ensure_dir(model["target"])
-            if not os.path.exists(model["target"]):
-                os.symlink(model["path"], model["target"])
+            try:
+                debug_log(f"⬇️ Downloading: {model['url']}")
+                # This uses fal's internal cache
+                cached_path = download_model_weights(model["url"])
+                
+                # Symlink to ComfyUI models dir
+                target_path = model["target"]
+                ensure_dir(target_path)
+                
+                if os.path.exists(target_path) or os.path.islink(target_path):
+                    os.unlink(target_path)  # Remove existing to be safe
+                    
+                os.symlink(cached_path, target_path)
+                debug_log(f"✅ Linked: {cached_path} -> {target_path}")
+                
+            except Exception as e:
+                debug_log(f"❌ Failed to download/link {model['url']}: {e}")
+                raise e
 
         # Preflight: verify face_parsing node is present and importable
         try:
@@ -268,6 +262,75 @@ class SkinFixApp(
             debug_log("✅ ComfyUI reports FaceParsingResultsParser(FaceParsing) is available")
         except Exception as e:
             raise RuntimeError(f"ComfyUI missing face_parsing node: {e}")
+
+        # -------------------------------------------------
+        # Warmup
+        # -------------------------------------------------
+        self._run_warmup()
+
+    def _run_warmup(self):
+        """Run a lightweight generation to load models into GPU memory."""
+        debug_log("🔥 Starting warmup...")
+        try:
+            # 1. Create a dummy image (black 64x64)
+            dummy_img = PILImage.new("RGB", (64, 64), (0, 0, 0))
+            buf = BytesIO()
+            dummy_img.save(buf, format="PNG")
+            image_b64 = base64.b64encode(buf.getvalue()).decode()
+            
+            # 2. Upload dummy image
+            image_name = f"warmup_{uuid.uuid4().hex}.png"
+            upload_images([{
+                "name": image_name,
+                "image": image_b64
+            }])
+
+            # 3. Prepare warmup workflow
+            # We clone the workflow and set minimal parameters for speed
+            # but enough to trigger model loading.
+            job = copy.deepcopy(WORKFLOW_JSON)
+            workflow = job["input"]["workflow"]
+            
+            # Set input image
+            workflow["545"]["inputs"]["image"] = image_name
+            
+            # Set minimal processing parameters
+            workflow["510"]["inputs"]["steps"] = 1  # 1 step is enough to load models
+            workflow["548"]["inputs"]["resolution"] = 512
+            workflow["548"]["inputs"]["max_resolution"] = 512
+            workflow["549"]["inputs"]["encode_tile_size"] = 512
+            workflow["549"]["inputs"]["decode_tile_size"] = 512
+            
+            # 4. Run ComfyUI
+            client_id = str(uuid.uuid4())
+            ws = websocket.WebSocket()
+            ws.connect(f"ws://{COMFY_HOST}/ws?clientId={client_id}")
+
+            resp = requests.post(
+                f"http://{COMFY_HOST}/prompt",
+                json={"prompt": workflow, "client_id": client_id},
+                timeout=30
+            )
+            
+            if resp.status_code == 200:
+                prompt_id = resp.json()["prompt_id"]
+                # Wait for completion
+                while True:
+                    out = ws.recv()
+                    if not out.strip().startswith('{'):
+                        continue
+                    msg = json.loads(out)
+                    if msg.get("type") == "executing" and msg["data"]["node"] is None:
+                        break
+                debug_log("✅ Warmup complete - models loaded.")
+            else:
+                debug_log(f"⚠️ Warmup failed to queue: {resp.text}")
+                
+            ws.close()
+            
+        except Exception as e:
+            debug_log(f"⚠️ Warmup failed: {e}")
+            traceback.print_exc()
 
     @fal.endpoint("/")
     async def handler(self, input: SkinFixInput, response: Response) -> SkinFixOutput:
