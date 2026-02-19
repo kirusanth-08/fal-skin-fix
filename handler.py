@@ -93,6 +93,28 @@ def resolve_model_source(model):
     model_log(f"⬇️ Downloading: {model['url']}")
     return download_model_weights(model["url"]), "download"
 
+def ensure_optional_flashpack_link(model):
+    source = os.path.splitext(model["path"])[0] + ".flashpack"
+    target = os.path.splitext(model["target"])[0] + ".flashpack"
+
+    if not os.path.exists(source):
+        return
+
+    if os.path.exists(target):
+        if os.path.islink(target):
+            model_log(f"🔗 Using linked flashpack: {target} -> {os.readlink(target)}")
+        else:
+            model_log(f"✅ Using existing flashpack file: {target}")
+        return
+
+    if os.path.islink(target):
+        model_log(f"🧹 Removing broken flashpack symlink: {target}")
+        os.unlink(target)
+
+    ensure_dir(target)
+    os.symlink(source, target)
+    model_log(f"✅ Linked flashpack: {source} -> {target}")
+
 def ensure_model_link(model):
     target_path = model["target"]
     if os.path.exists(target_path):
@@ -100,6 +122,7 @@ def ensure_model_link(model):
             model_log(f"🔗 Using linked model: {target_path} -> {os.readlink(target_path)}")
         else:
             model_log(f"✅ Using existing model file: {target_path}")
+        ensure_optional_flashpack_link(model)
         return
 
     if os.path.islink(target_path):
@@ -110,6 +133,7 @@ def ensure_model_link(model):
     ensure_dir(target_path)
     os.symlink(cached_path, target_path)
     model_log(f"✅ Linked ({source}): {cached_path} -> {target_path}")
+    ensure_optional_flashpack_link(model)
 
 def check_server(url, retries=500, delay=0.1):
     for _ in range(retries):

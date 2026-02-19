@@ -45,7 +45,7 @@ WORKDIR /comfyui
 # Extra dependencies
 # ---------------------------------------------------------
 RUN pip install --no-cache-dir requests websocket-client websockets sageattention \
-    accelerate transformers insightface onnxruntime-gpu==1.18.0
+    accelerate transformers flashpack insightface onnxruntime-gpu==1.18.0
 
 # ---------------------------------------------------------
 # Skin v03 / ComfyUI Custom Nodes
@@ -54,6 +54,9 @@ RUN pip install --no-cache-dir requests websocket-client websockets sageattentio
 # Vendored comfyui_face_parsing (kept in repo to avoid network install issues)
 COPY custom_nodes/comfyui_face_parsing /comfyui/custom_nodes/comfyui_face_parsing
 RUN pip install -r /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt
+
+# Flashpack loader custom node
+COPY custom_nodes/flashpack_loader /comfyui/custom_nodes/flashpack_loader
 
 # Install CNR (ComfyUI Registry) packages - matching working RunPod snapshot versions
 RUN comfy --workspace /comfyui node install ComfyUI_LayerStyle_Advance@2.0.37 \
