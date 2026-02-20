@@ -44,9 +44,17 @@ WARMUP_RESOLUTION = 512
 WARMUP_CFG = 0.5
 WARMUP_DENOISE = 0.2
 
+def get_timestamp() -> str:
+    """Get current timestamp for logging."""
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
 def debug_log(message: str) -> None:
     if DEBUG_LOGS:
-        print(message)
+        print(f"[{get_timestamp()}] {message}")
+
+def always_log(message: str) -> None:
+    """Always log, regardless of DEBUG_LOGS setting."""
+    print(f"[{get_timestamp()}] {message}")
 
 # -------------------------------------------------
 # Presets
@@ -98,13 +106,21 @@ def download_if_missing(url, path):
                 f.write(chunk)
 
 def check_server(url, retries=500, delay=0.1):
-    for _ in range(retries):
+    always_log(f"🔍 Starting server check for {url} (max retries: {retries})")
+    start_time = time.time()
+    for i in range(retries):
         try:
-            if requests.get(url).status_code == 200:
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                elapsed = time.time() - start_time
+                always_log(f"✅ Server ready after {elapsed:.2f}s (attempt {i+1}/{retries})")
                 return True
-        except:
-            pass
+        except Exception as e:
+            if i == 0 or (i + 1) % 50 == 0:
+                always_log(f"⏳ Waiting for server... (attempt {i+1}/{retries}, error: {type(e).__name__})")
         time.sleep(delay)
+    elapsed = time.time() - start_time
+    always_log(f"❌ Server check failed after {elapsed:.2f}s ({retries} attempts)")
     return False
 
 def fal_image_to_base64(img: Image) -> str:
@@ -123,18 +139,33 @@ def image_url_to_base64(image_url: str) -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 def upload_images(images):
+    always_log(f"📤 Uploading {len(images)} image(s) to ComfyUI at {COMFY_HOST}")
+    start_time = time.time()
     for img in images:
         blob = base64.b64decode(img["image"])
         files = {"image": (img["name"], BytesIO(blob), "image/png")}
-        r = requests.post(f"http://{COMFY_HOST}/upload/image", files=files)
-        r.raise_for_status()
+        try:
+            r = requests.post(f"http://{COMFY_HOST}/upload/image", files=files, timeout=30)
+            r.raise_for_status()
+        except Exception as e:
+            always_log(f"❌ Upload failed: {type(e).__name__}: {e}")
+            raise
+    elapsed = time.time() - start_time
+    always_log(f"✅ Upload completed in {elapsed:.2f}s")
 
 def run_workflow(workflow: dict, timeout_seconds: int = 300) -> dict:
     """Execute a ComfyUI workflow and return its history entry."""
+    always_log(f"🚀 Starting workflow execution (timeout: {timeout_seconds}s)")
+    start_time = time.time()
     client_id = str(uuid.uuid4())
     ws = websocket.WebSocket()
     ws.settimeout(timeout_seconds)
-    ws.connect(f"ws://{COMFY_HOST}/ws?clientId={client_id}")
+    try:
+        ws.connect(f"ws://{COMFY_HOST}/ws?clientId={client_id}")
+        always_log(f"🔌 WebSocket connected to {COMFY_HOST}")
+    except Exception as e:
+        always_log(f"❌ WebSocket connection failed: {type(e).__name__}: {e}")
+        raise
 
     try:
         resp = requests.post(
@@ -159,6 +190,8 @@ def run_workflow(workflow: dict, timeout_seconds: int = 300) -> dict:
             raise TimeoutError("ComfyUI workflow execution timed out")
 
         history = requests.get(f"http://{COMFY_HOST}/history/{prompt_id}", timeout=30).json()
+        elapsed = time.time() - start_time
+        always_log(f"✅ Workflow completed in {elapsed:.2f}s")
         return history[prompt_id]
     finally:
         ws.close()
@@ -284,7 +317,19 @@ class SkinFixApp(
         except Exception as e:
             debug_log(f"❌ face_parsing import failed: {e}")
 
-        # Start ComfyUI (NO --log-stdout)
+        # Start ComfyUI and capture logs
+        always_log("Starting ComfyUI process.")
+        comfy_start_time = time.time()
+        
+        # Create log files to capture ComfyUI output
+        comfy_log_dir = tempfile.gettempdir()
+        comfy_stdout_path = os.path.join(comfy_log_dir, "comfyui_stdout.log")
+        comfy_stderr_path = os.path.join(comfy_log_dir, "comfyui_stderr.log")
+        
+        comfy_stdout = open(comfy_stdout_path, "w")
+        comfy_stderr = open(comfy_stderr_path, "w")
+        always_log(f"📝 ComfyUI logs: stdout={comfy_stdout_path}, stderr={comfy_stderr_path}")
+        
         self.comfy = subprocess.Popen(
             [
                 "python", "-u", "/comfyui/main.py",
@@ -292,12 +337,25 @@ class SkinFixApp(
                 "--disable-metadata",
                 "--listen", "--port", "8188"
             ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            stdout=comfy_stdout,
+            stderr=comfy_stderr
         )
+        always_log(f"ComfyUI process started (PID: {self.comfy.pid})")
 
         if not check_server(f"http://{COMFY_HOST}/system_stats"):
+            # Print recent ComfyUI logs for debugging
+            always_log("ComfyUI failed to start. Recent logs:")
+            try:
+                with open(comfy_stderr_path, "r") as f:
+                    stderr_lines = f.readlines()[-50:]  # Last 50 lines
+                    for line in stderr_lines:
+                        always_log(f"  STDERR: {line.rstrip()}")
+            except:
+                pass
             raise RuntimeError("ComfyUI failed to start")
+        
+        comfy_ready_time = time.time() - comfy_start_time
+        always_log(f"ComfyUI ready in {comfy_ready_time:.2f}s")
 
         # Verify ComfyUI registered the face_parsing node
         try:
@@ -311,6 +369,8 @@ class SkinFixApp(
             raise RuntimeError(f"ComfyUI missing face_parsing node: {e}")
 
         # Warmup: execute one synthetic run in setup so model/node loading isn't charged to first request.
+        always_log("🔥 Starting warmup workflow...")
+        warmup_start_time = time.time()
         try:
             warmup_job = copy.deepcopy(WORKFLOW_JSON)
             warmup_workflow = warmup_job["input"]["workflow"]
@@ -338,13 +398,17 @@ class SkinFixApp(
             warmup_workflow["549"]["inputs"]["decode_tile_size"] = WARMUP_RESOLUTION
 
             run_workflow(warmup_workflow, timeout_seconds=420)
-            debug_log("✅ Warmup workflow completed")
+            warmup_elapsed = time.time() - warmup_start_time
+            always_log(f"✅ Warmup workflow completed in {warmup_elapsed:.2f}s")
         except Exception as e:
             # Do not block startup on warmup, but surface context for debugging.
-            debug_log(f"⚠️ Warmup workflow failed: {e}")
+            warmup_elapsed = time.time() - warmup_start_time
+            always_log(f"⚠️ Warmup workflow failed after {warmup_elapsed:.2f}s: {e}")
 
     @fal.endpoint("/")
     async def handler(self, input: SkinFixInput, response: Response) -> SkinFixOutput:
+        always_log(f"📥 New request received (mode: {input.mode}, preset: {input.preset_name})")
+        request_start_time = time.time()
         try:
             job = copy.deepcopy(WORKFLOW_JSON)
             workflow = job["input"]["workflow"]
@@ -427,6 +491,9 @@ class SkinFixApp(
             
             # Set billing headers
             response.headers["x-fal-billable-units"] = str(len(images))
+            
+            total_elapsed = time.time() - request_start_time
+            always_log(f"✅ Request completed successfully in {total_elapsed:.2f}s ({len(images)} images)")
             
             return SkinFixOutput(images=images)
 
