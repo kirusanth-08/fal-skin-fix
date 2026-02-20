@@ -7,8 +7,6 @@ ARG PYTORCH_INDEX_URL=https://download.pytorch.org/whl/cu128
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_PREFER_BINARY=1 \
     CMAKE_BUILD_PARALLEL_LEVEL=8
 
@@ -27,28 +25,30 @@ RUN ln -sf /usr/bin/python3.12 /usr/bin/python3 && \
     ln -sf /usr/bin/python3.12 /usr/bin/python
 
 RUN python3.12 -m ensurepip --upgrade && \
-    python3.12 -m pip install --no-cache-dir --upgrade pip setuptools wheel
+    python3.12 -m pip install --upgrade pip setuptools wheel
 
 # ---------------------------------------------------------
 # PyTorch (CUDA 12.8)
 # ---------------------------------------------------------
-RUN pip install --no-cache-dir torch==2.7.0 -f https://download.pytorch.org/whl/cu128/torch_stable.html
+RUN pip install torch==2.7.0 -f https://download.pytorch.org/whl/cu128/torch_stable.html
 
 # ---------------------------------------------------------
 # ComfyUI Setup
 # ---------------------------------------------------------
 WORKDIR /opt
-RUN pip install --no-cache-dir comfy-cli
+RUN pip install comfy-cli
 RUN yes | comfy --workspace /comfyui install --version "${COMFYUI_VERSION}" --nvidia
 
 WORKDIR /comfyui
-RUN rm -rf /comfyui/.git
 
 # ---------------------------------------------------------
 # Extra dependencies
 # ---------------------------------------------------------
-RUN pip install --no-cache-dir requests websocket-client websockets sageattention \
-    accelerate transformers flashpack insightface onnxruntime-gpu==1.18.0
+RUN pip install requests websocket-client sageattention \
+    accelerate transformers insightface onnxruntime-gpu==1.18.0
+
+# FIX: Add missing websocket packages for fal run
+RUN pip install websocket-client websockets
 
 # ---------------------------------------------------------
 # Skin v03 / ComfyUI Custom Nodes
@@ -56,10 +56,7 @@ RUN pip install --no-cache-dir requests websocket-client websockets sageattentio
 
 # Vendored comfyui_face_parsing (kept in repo to avoid network install issues)
 COPY custom_nodes/comfyui_face_parsing /comfyui/custom_nodes/comfyui_face_parsing
-RUN pip install --no-cache-dir -r /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt
-
-# Flashpack loader custom node
-COPY custom_nodes/flashpack_loader /comfyui/custom_nodes/flashpack_loader
+RUN pip install -r /comfyui/custom_nodes/comfyui_face_parsing/requirements.txt
 
 # Install CNR (ComfyUI Registry) packages - matching working RunPod snapshot versions
 RUN comfy --workspace /comfyui node install ComfyUI_LayerStyle_Advance@2.0.37 \
@@ -74,52 +71,38 @@ RUN echo "=== Listing installed custom nodes ===" && ls -la /comfyui/custom_node
 
 # Git-based custom nodes with pinned commit hashes from snapshot
 # 1. ComfyRoll Custom Nodes
-RUN git init /comfyui/custom_nodes/ComfyUI_Comfyroll_CustomNodes \
+RUN git clone https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git /comfyui/custom_nodes/ComfyUI_Comfyroll_CustomNodes \
     && cd /comfyui/custom_nodes/ComfyUI_Comfyroll_CustomNodes \
-    && git remote add origin https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes.git \
-    && git fetch --depth 1 origin d78b780ae43fcf8c6b7c6505e6ffb4584281ceca \
-    && git checkout FETCH_HEAD \
-    && rm -rf .git \
-    && if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+    && git checkout d78b780ae43fcf8c6b7c6505e6ffb4584281ceca \
+    && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
 # 2. ComfyUI Florence2
-RUN git clone --depth 1 https://github.com/kijai/ComfyUI-Florence2.git /comfyui/custom_nodes/ComfyUI-Florence2 \
+RUN git clone https://github.com/kijai/ComfyUI-Florence2.git /comfyui/custom_nodes/ComfyUI-Florence2 \
     && cd /comfyui/custom_nodes/ComfyUI-Florence2 \
-    && rm -rf .git \
-    && if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+    && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
 # 3. ComfyUI KJNodes (pinned hash from snapshot)
-RUN git init /comfyui/custom_nodes/ComfyUI-KJNodes \
+RUN git clone https://github.com/kijai/ComfyUI-KJNodes.git /comfyui/custom_nodes/ComfyUI-KJNodes \
     && cd /comfyui/custom_nodes/ComfyUI-KJNodes \
-    && git remote add origin https://github.com/kijai/ComfyUI-KJNodes.git \
-    && git fetch --depth 1 origin 50a0837f9aea602b184bbf6dbabf66ed2c7a1d22 \
-    && git checkout FETCH_HEAD \
-    && rm -rf .git \
-    && if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+    && git checkout 50a0837f9aea602b184bbf6dbabf66ed2c7a1d22 \
+    && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
 # 4. ComfyUI Post-Processing Nodes
-RUN git clone --depth 1 https://github.com/EllangoK/ComfyUI-post-processing-nodes.git /comfyui/custom_nodes/ComfyUI-post-processing-nodes \
+RUN git clone https://github.com/EllangoK/ComfyUI-post-processing-nodes.git /comfyui/custom_nodes/ComfyUI-post-processing-nodes \
     && cd /comfyui/custom_nodes/ComfyUI-post-processing-nodes \
-    && rm -rf .git \
-    && if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+    && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
 # 5. Masquerade Nodes (pinned hash from snapshot)
-RUN git init /comfyui/custom_nodes/masquerade-nodes-comfyui \
+RUN git clone https://github.com/BadCafeCode/masquerade-nodes-comfyui.git /comfyui/custom_nodes/masquerade-nodes-comfyui \
     && cd /comfyui/custom_nodes/masquerade-nodes-comfyui \
-    && git remote add origin https://github.com/BadCafeCode/masquerade-nodes-comfyui.git \
-    && git fetch --depth 1 origin 432cb4d146a391b387a0cd25ace824328b5b61cf \
-    && git checkout FETCH_HEAD \
-    && rm -rf .git \
-    && if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+    && git checkout 432cb4d146a391b387a0cd25ace824328b5b61cf \
+    && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
 # 6. rgthree – Power Lora Loader (pinned hash from snapshot)
-RUN git init /comfyui/custom_nodes/rgthree-comfy \
+RUN git clone https://github.com/rgthree/rgthree-comfy.git /comfyui/custom_nodes/rgthree-comfy \
     && cd /comfyui/custom_nodes/rgthree-comfy \
-    && git remote add origin https://github.com/rgthree/rgthree-comfy.git \
-    && git fetch --depth 1 origin 8ff50e4521881eca1fe26aec9615fc9362474931 \
-    && git checkout FETCH_HEAD \
-    && rm -rf .git \
-    && if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
+    && git checkout 8ff50e4521881eca1fe26aec9615fc9362474931 \
+    && if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
 # ---------------------------------------------------------
 # Pre-download face_parsing models (required by Ryuukeisyou comfyui_face_parsing)

@@ -336,9 +336,9 @@ WORKFLOW_JSON={
         "inputs": {
           "ckpt_name": "epicrealismXL_vxviLastfameDMD2.safetensors"
         },
-        "class_type": "FlashpackCheckpointLoader",
+        "class_type": "CheckpointLoaderSimple",
         "_meta": {
-          "title": "Flashpack Checkpoint Loader"
+          "title": "Load Checkpoint"
         }
       },
       "525": {
