@@ -170,7 +170,10 @@ class SkinFixInput(BaseModel):
         description="Adjust skin refinement level (only active when mode is 'custom')"
     )
 
-    seed: int = Field(default=123456789, title="Random Seed")
+    seed: int = Field(
+        default_factory=lambda: random.randint(0, 2**32 - 1),
+        title="Random Seed"
+    )
 
     upscale_resolution: Literal[
         1024, 1280, 1536, 1792,
