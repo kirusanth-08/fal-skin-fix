@@ -125,6 +125,40 @@ def upload_images(images):
         r = requests.post(f"http://{COMFY_HOST}/upload/image", files=files)
         r.raise_for_status()
 
+def run_workflow(workflow: dict, timeout_seconds: int = 300) -> dict:
+    """Execute a ComfyUI workflow and return its history entry."""
+    client_id = str(uuid.uuid4())
+    ws = websocket.WebSocket()
+    ws.settimeout(timeout_seconds)
+    ws.connect(f"ws://{COMFY_HOST}/ws?clientId={client_id}")
+
+    try:
+        resp = requests.post(
+            f"http://{COMFY_HOST}/prompt",
+            json={"prompt": workflow, "client_id": client_id},
+            timeout=30,
+        )
+        if resp.status_code != 200:
+            raise RuntimeError(f"ComfyUI rejected workflow: {resp.text}")
+
+        prompt_id = resp.json()["prompt_id"]
+        deadline = time.time() + timeout_seconds
+
+        while time.time() < deadline:
+            out = ws.recv()
+            if not out.strip().startswith('{'):
+                continue
+            msg = json.loads(out)
+            if msg.get("type") == "executing" and msg["data"]["node"] is None:
+                break
+        else:
+            raise TimeoutError("ComfyUI workflow execution timed out")
+
+        history = requests.get(f"http://{COMFY_HOST}/history/{prompt_id}", timeout=30).json()
+        return history[prompt_id]
+    finally:
+        ws.close()
+
 # -------------------------------------------------
 # Input Model
 # -------------------------------------------------
@@ -272,6 +306,38 @@ class SkinFixApp(
         except Exception as e:
             raise RuntimeError(f"ComfyUI missing face_parsing node: {e}")
 
+        # Warmup: execute one synthetic run in setup so model/node loading isn't charged to first request.
+        try:
+            warmup_job = copy.deepcopy(WORKFLOW_JSON)
+            warmup_workflow = warmup_job["input"]["workflow"]
+
+            warmup_image = PILImage.new("RGB", (1024, 1024), color=(127, 127, 127))
+            warmup_buf = BytesIO()
+            warmup_image.save(warmup_buf, format="PNG")
+            warmup_name = f"warmup_{uuid.uuid4().hex}.png"
+            upload_images([{
+                "name": warmup_name,
+                "image": base64.b64encode(warmup_buf.getvalue()).decode()
+            }])
+            warmup_workflow["545"]["inputs"]["image"] = warmup_name
+
+            warmup_sampler = warmup_workflow["510"]["inputs"]
+            warmup_sampler["cfg"] = PRESETS["smooth_skin"]["cfg"]
+            warmup_sampler["denoise"] = PRESETS["smooth_skin"]["denoise"]
+            warmup_sampler["seed"] = random.randint(0, 2**32 - 1)
+
+            warmup_workflow["548"]["inputs"]["resolution"] = 1024
+            warmup_workflow["548"]["inputs"]["max_resolution"] = 4096
+            warmup_workflow["548"]["inputs"]["seed"] = random.randint(0, 2**32 - 1)
+            warmup_workflow["549"]["inputs"]["encode_tile_size"] = 1024
+            warmup_workflow["549"]["inputs"]["decode_tile_size"] = 1024
+
+            run_workflow(warmup_workflow, timeout_seconds=420)
+            debug_log("✅ Warmup workflow completed")
+        except Exception as e:
+            # Do not block startup on warmup, but surface context for debugging.
+            debug_log(f"⚠️ Warmup workflow failed: {e}")
+
     @fal.endpoint("/")
     async def handler(self, input: SkinFixInput, response: Response) -> SkinFixOutput:
         try:
@@ -335,38 +401,14 @@ class SkinFixApp(
             # -------------------------------------------------
             # 4️⃣ Run ComfyUI
             # -------------------------------------------------
-            client_id = str(uuid.uuid4())
-            ws = websocket.WebSocket()
-            ws.connect(f"ws://{COMFY_HOST}/ws?clientId={client_id}")
-
-            resp = requests.post(
-                f"http://{COMFY_HOST}/prompt",
-                json={"prompt": workflow, "client_id": client_id},
-                timeout=30
-            )
-            
-            # Log detailed error if request fails
-            if resp.status_code != 200:
-                error_detail = resp.text
-                debug_log(f"ComfyUI Error Response: {error_detail}")
-                raise HTTPException(status_code=500, detail=f"ComfyUI rejected workflow: {error_detail}")
-            
-            prompt_id = resp.json()["prompt_id"]
-
-            while True:
-                out = ws.recv()
-                if not out.strip().startswith('{'):
-                    continue  # Skip non-JSON messages (progress messages)
-                msg = json.loads(out)
-                if msg.get("type") == "executing" and msg["data"]["node"] is None:
-                    break
-
-            history = requests.get(
-                f"http://{COMFY_HOST}/history/{prompt_id}"
-            ).json()
+            try:
+                history_entry = run_workflow(workflow)
+            except Exception as e:
+                debug_log(f"ComfyUI Error Response: {e}")
+                raise HTTPException(status_code=500, detail=str(e))
 
             images = []
-            for node in history[prompt_id]["outputs"].values():
+            for node in history_entry["outputs"].values():
                 for img in node.get("images", []):
                     params = (
                         f"filename={img['filename']}"
@@ -377,8 +419,6 @@ class SkinFixApp(
                     pil_image = PILImage.open(BytesIO(r.content))
                     output_image = Image.from_pil(pil_image, format="png")
                     images.append(output_image)
-
-            ws.close()
             
             # Set billing headers
             response.headers["x-fal-billable-units"] = str(len(images))
