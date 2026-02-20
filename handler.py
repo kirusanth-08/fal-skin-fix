@@ -48,8 +48,6 @@ def debug_log(message: str) -> None:
 # Presets
 # -------------------------------------------------
 PRESETS = {
-    "imperfect_skin": {"cfg": 0.1, "denoise": 0.34, "resolution": 2048},
-    "high_end_skin": {"cfg": 1.1, "denoise": 0.30, "resolution": 3072},
     "smooth_skin": {
         "cfg": 1.1,
         "denoise": 0.30,
@@ -65,9 +63,11 @@ PRESETS = {
             "rough skin, waxy skin, plastic texture, airbrushed"
         )
     },
+    "imperfect_skin": {"cfg": 0.1, "denoise": 0.34, "resolution": 2048},
     "portrait": {"cfg": 0.5, "denoise": 0.35, "resolution": 2048},
     "mid_range": {"cfg": 1.4, "denoise": 0.40, "resolution": 2048},
     "full_body": {"cfg": 1.5, "denoise": 0.30, "resolution": 2048},
+    "high_end_skin": {"cfg": 1.1, "denoise": 0.30, "resolution": 3072},
 }
 
 # -------------------------------------------------
@@ -142,14 +142,14 @@ class SkinFixInput(BaseModel):
     )
 
     preset_name: Optional[Literal[
-        "imperfect_skin",
-        "high_end_skin",
         "smooth_skin",
+        "imperfect_skin",
         "portrait",
         "mid_range",
-        "full_body"
+        "full_body",
+        "high_end_skin"
     ]] = Field(
-        default="high_end_skin",
+        default="smooth_skin",
         title="Preset",
         description="Select a preset (only active when mode is 'preset')"
     )
