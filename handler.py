@@ -236,7 +236,7 @@ class SkinFixOutput(BaseModel):
 class SkinFixApp(
     fal.App,
     keep_alive=100,
-    min_concurrency=0,
+    min_concurrency=1,
     max_concurrency=5,
     name="skin-new",
 ):
