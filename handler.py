@@ -208,7 +208,10 @@ class SkinFixInput(BaseModel):
         description="Adjust skin refinement level (only active when mode is 'custom')"
     )
 
-    seed: int = Field(default=123456789, title="Random Seed")
+    seed: int = Field(
+        default_factory=lambda: random.randint(0, 2**32 - 1),
+        title="Random Seed"
+    )
 
     upscale_resolution: Literal[
         1024, 1280, 1536, 1792,
@@ -313,6 +316,7 @@ class SkinFixApp(
             warmup_workflow = warmup_job["input"]["workflow"]
 
             warmup_image = PILImage.new("RGB", (WARMUP_RESOLUTION, WARMUP_RESOLUTION), color=(127, 127, 127))
+
             warmup_buf = BytesIO()
             warmup_image.save(warmup_buf, format="PNG")
             warmup_name = f"warmup_{uuid.uuid4().hex}.png"
