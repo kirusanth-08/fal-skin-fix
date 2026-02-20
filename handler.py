@@ -236,7 +236,7 @@ class SkinFixOutput(BaseModel):
 class SkinFixApp(
     fal.App,
     keep_alive=100,
-    min_concurrency=0,
+    min_concurrency=1,
     max_concurrency=5,
     name="skin-new",
 ):
@@ -316,7 +316,6 @@ class SkinFixApp(
             warmup_workflow = warmup_job["input"]["workflow"]
 
             warmup_image = PILImage.new("RGB", (WARMUP_RESOLUTION, WARMUP_RESOLUTION), color=(127, 127, 127))
-
             warmup_buf = BytesIO()
             warmup_image.save(warmup_buf, format="PNG")
             warmup_name = f"warmup_{uuid.uuid4().hex}.png"
