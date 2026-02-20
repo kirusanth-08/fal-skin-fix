@@ -39,6 +39,10 @@ custom_image = ContainerImage.from_dockerfile(dockerfile_path)
 
 COMFY_HOST = "127.0.0.1:8188"
 DEBUG_LOGS = os.environ.get("FAL_DEBUG") == "1"
+WARMUP_STEPS = 1
+WARMUP_RESOLUTION = 512
+WARMUP_CFG = 0.5
+WARMUP_DENOISE = 0.2
 
 def debug_log(message: str) -> None:
     if DEBUG_LOGS:
@@ -311,7 +315,8 @@ class SkinFixApp(
             warmup_job = copy.deepcopy(WORKFLOW_JSON)
             warmup_workflow = warmup_job["input"]["workflow"]
 
-            warmup_image = PILImage.new("RGB", (1024, 1024), color=(127, 127, 127))
+            warmup_image = PILImage.new("RGB", (WARMUP_RESOLUTION, WARMUP_RESOLUTION), color=(127, 127, 127))
+
             warmup_buf = BytesIO()
             warmup_image.save(warmup_buf, format="PNG")
             warmup_name = f"warmup_{uuid.uuid4().hex}.png"
@@ -322,15 +327,16 @@ class SkinFixApp(
             warmup_workflow["545"]["inputs"]["image"] = warmup_name
 
             warmup_sampler = warmup_workflow["510"]["inputs"]
-            warmup_sampler["cfg"] = PRESETS["smooth_skin"]["cfg"]
-            warmup_sampler["denoise"] = PRESETS["smooth_skin"]["denoise"]
+            warmup_sampler["steps"] = WARMUP_STEPS
+            warmup_sampler["cfg"] = WARMUP_CFG
+            warmup_sampler["denoise"] = WARMUP_DENOISE
             warmup_sampler["seed"] = random.randint(0, 2**32 - 1)
 
-            warmup_workflow["548"]["inputs"]["resolution"] = 1024
-            warmup_workflow["548"]["inputs"]["max_resolution"] = 4096
+            warmup_workflow["548"]["inputs"]["resolution"] = WARMUP_RESOLUTION
+            warmup_workflow["548"]["inputs"]["max_resolution"] = WARMUP_RESOLUTION
             warmup_workflow["548"]["inputs"]["seed"] = random.randint(0, 2**32 - 1)
-            warmup_workflow["549"]["inputs"]["encode_tile_size"] = 1024
-            warmup_workflow["549"]["inputs"]["decode_tile_size"] = 1024
+            warmup_workflow["549"]["inputs"]["encode_tile_size"] = WARMUP_RESOLUTION
+            warmup_workflow["549"]["inputs"]["decode_tile_size"] = WARMUP_RESOLUTION
 
             run_workflow(warmup_workflow, timeout_seconds=420)
             debug_log("✅ Warmup workflow completed")
